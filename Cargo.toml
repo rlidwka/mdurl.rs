@@ -1,6 +1,6 @@
 [package]
 name = "mdurl"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Alex Kocharin <alex@kocharin.ru>"]
 description = "URL parser and formatter that gracefully handles invalid input."
 documentation = "https://docs.rs/mdurl"
@@ -17,5 +17,5 @@ name = "mdurl"
 path = "src/lib.rs"
 
 [dependencies]
-once_cell = "1.13.0"
-regex = "1.6.0"
+once_cell = ">= 0.2.0, < 2"
+regex     = ">= 0.2.0, < 2"
