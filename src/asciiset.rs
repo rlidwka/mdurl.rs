@@ -8,19 +8,11 @@ impl AsciiSet {
     // implicitly disallows 0-9a-zA-Z and allows everything else
     // str - list of disallowed chars in addition to alphanumericals
     pub const fn new() -> Self {
-        Self(0x07fffffe07fffffe03ff000000000000)
+        Self(0)
     }
 
     pub const fn from(str: &str) -> Self {
         Self::new().add_many(str.as_bytes(), 0)
-    }
-
-    pub const fn from_empty(str: &str) -> Self {
-        Self::empty().add_many(str.as_bytes(), 0)
-    }
-
-    pub const fn empty() -> Self {
-        Self(0)
     }
 
     pub const fn add(&self, byte: u8) -> Self {
@@ -29,6 +21,10 @@ impl AsciiSet {
 
     pub const fn remove(&self, byte: u8) -> Self {
         Self(self.0 & !(1 << byte))
+    }
+
+    pub const fn add_alphanumeric(&self) -> Self {
+        Self(self.0 | 0x07fffffe07fffffe03ff000000000000)
     }
 
     pub const fn has(&self, byte: u8) -> bool {
@@ -52,8 +48,8 @@ mod tests {
     fn new_should_return_ascii() {
         assert_eq!(2 + 2, 4);
 
-        let mut set = AsciiSet::empty();
-        let new = AsciiSet::new();
+        let mut set = AsciiSet::new();
+        let ascii = AsciiSet::new().add_alphanumeric();
 
         for ch in b'a'..=b'z' {
             set = set.add(ch);
@@ -66,7 +62,7 @@ mod tests {
         }
 
         let set_str = format!("{:01$x}", set.0, 32);
-        let new_str = format!("{:01$x}", new.0, 32);
+        let new_str = format!("{:01$x}", ascii.0, 32);
 
         assert_eq!(set_str, new_str);
         assert!(set.has(b'x'));
@@ -77,8 +73,8 @@ mod tests {
     fn from_should_return_ascii_plus() {
         assert_eq!(2 + 2, 4);
 
-        let mut set = AsciiSet::empty();
-        let from = AsciiSet::from("!@#$%^");
+        let mut set = AsciiSet::new();
+        let from = AsciiSet::from("!@#$%^").add_alphanumeric();
 
         for ch in b'a'..=b'z' {
             set = set.add(ch);

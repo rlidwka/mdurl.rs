@@ -45,7 +45,7 @@ fn parse_hex_digit(byte: u8) -> u8 {
 mod tests {
     use super::decode;
     use super::AsciiSet;
-    const SET : AsciiSet = AsciiSet::from_empty(";/?:@&=+$,#");
+    const SET : AsciiSet = AsciiSet::from(";/?:@&=+$,#");
 
     #[test]
     fn should_decode_xx() {
@@ -59,9 +59,9 @@ mod tests {
 
     #[test]
     fn should_not_decode_reserved_set() {
-        assert_eq!(decode("%20%25%20", AsciiSet::from_empty("%")), " %25 ");
-        assert_eq!(decode("%20%25%20", AsciiSet::from_empty(" ")), "%20%%20");
-        assert_eq!(decode("%20%25%20", AsciiSet::from_empty(" %")), "%20%25%20");
+        assert_eq!(decode("%20%25%20", AsciiSet::from("%")), " %25 ");
+        assert_eq!(decode("%20%25%20", AsciiSet::from(" ")), "%20%%20");
+        assert_eq!(decode("%20%25%20", AsciiSet::from(" %")), "%20%25%20");
     }
 
     #[test]

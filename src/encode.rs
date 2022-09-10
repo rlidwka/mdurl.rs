@@ -16,6 +16,7 @@ const DIGITS : &[ u8; 16 ] = b"0123456789ABCDEF";
 /// assert_eq!(encode("[hello]", SAFE_SET, true), "%5Bhello%5D");
 /// ```
 pub fn encode(string: &str, exclude: AsciiSet, keep_escaped: bool) -> String {
+    let exclude = exclude.add_alphanumeric();
     let mut result = Vec::new();
     let bytes = string.as_bytes();
     let len = bytes.len();
