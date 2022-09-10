@@ -5,8 +5,6 @@
 pub struct AsciiSet(u128);
 
 impl AsciiSet {
-    // implicitly disallows 0-9a-zA-Z and allows everything else
-    // str - list of disallowed chars in addition to alphanumericals
     pub const fn new() -> Self {
         Self(0)
     }

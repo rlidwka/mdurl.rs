@@ -46,14 +46,60 @@ use regex::Regex;
 use std::collections::HashSet;
 
 #[derive(Debug, Default, PartialEq, Eq)]
+/// `Url` object is created and returned by the [mdurl::parse](parse) function.
 pub struct Url<'a> {
+    /// The `protocol` property identifies the URL's protocol scheme.
+    ///
+    /// For example: `"http:"`.
     pub protocol: Option<&'a str>,
+
+    /// The `slashes` property is a `boolean` with a value of `true` if two ASCII
+    /// forward-slash characters (`/`) are required following the colon in the
+    /// `protocol`.
     pub slashes: bool,
+
+    /// The `auth` property is the username and password portion of the URL, also
+    /// referred to as _userinfo_. This string subset follows the `protocol` and
+    /// double slashes (if present) and precedes the `host` component, delimited by `@`.
+    /// The string is either the username, or it is the username and password separated
+    /// by `:`.
+    ///
+    /// For example: `"user:pass"`.
     pub auth: Option<&'a str>,
+
+    /// The `port` property is the numeric port portion of the `host` component.
+    ///
+    /// For example: `"8080"`.
     pub port: Option<&'a str>,
+
+    /// The `hostname` property is the host name portion of the `host` component
+    /// _without_ the `port` included.
+    ///
+    /// For example: `"sub.example.com"`.
     pub hostname: Option<&'a str>,
+
+    /// The `hash` property is the fragment identifier portion of the URL including the
+    /// leading `#` character.
+    ///
+    /// For example: `"#hash"`.
     pub hash: Option<&'a str>,
+
+    /// The `search` property consists of the entire "query string" portion of the
+    /// URL, including the leading ASCII question mark (`?`) character.
+    ///
+    /// For example: `'?query=string'`.
+    ///
+    /// No decoding of the query string is performed.
     pub search: Option<&'a str>,
+
+    /// The `pathname` property consists of the entire path section of the URL. This
+    /// is everything following the `host` (including the `port`) and before the start
+    /// of the `query` or `hash` components, delimited by either the ASCII question
+    /// mark (`?`) or hash (`#`) characters.
+    ///
+    /// For example: `'/p/a/t/h'`.
+    ///
+    /// No decoding of the path string is performed.
     pub pathname: Option<&'a str>,
 }
 
@@ -134,6 +180,15 @@ static SLASHED_PROTOCOL : Lazy<HashSet<&'static str>> = Lazy::new(||
 );
 
 
+/// Parse URL string and return a [Url] object.
+///
+///  - url - The URL string to parse.
+///
+///  - slashes_denote_host - If `true`, the first token after the literal
+///    string `//` and preceding the next `/` will be interpreted as the `host`.
+///    For instance, given `//foo/bar`, the result would be
+///    `{host: 'foo', pathname: '/bar'}` rather than `{pathname: '//foo/bar'}`.
+///
 pub fn parse(url: &str, slashes_denote_host: bool) -> Url {
     let mut this = Url::default();
     let mut rest = url;

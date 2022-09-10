@@ -1,5 +1,13 @@
 use crate::Url;
 
+/// Return a formatted URL string derived from [Url] object.
+///
+/// It simply concatenates whatever is in the input, and does no validation
+/// or escaping of any kind.
+///
+/// Round-trip is guaranteed, so `format(parse(str))` always equals to `str`,
+/// but if you write malformed data to `url`, you may get broken url as the output.
+///
 pub fn format(url: Url) -> String {
     let mut result = String::new();
 
