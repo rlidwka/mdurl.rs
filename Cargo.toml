@@ -1,0 +1,21 @@
+[package]
+name = "mdurl"
+version = "0.1.0"
+authors = ["Alex Kocharin <alex@kocharin.ru>"]
+description = "URL parser and formatter that gracefully handles invalid input."
+documentation = "https://docs.rs/mdurl"
+homepage = "https://github.com/rlidwka/mdurl.rs"
+repository = "https://github.com/rlidwka/mdurl.rs"
+readme = "README.md"
+keywords = ["markdown", "commonmark"]
+license = "MIT"
+categories = ["parser-implementations", "web-programming", "encoding"]
+edition = "2021"
+
+[lib]
+name = "mdurl"
+path = "src/lib.rs"
+
+[dependencies]
+once_cell = "1.13.0"
+regex = "1.6.0"
