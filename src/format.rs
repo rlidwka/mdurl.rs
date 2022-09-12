@@ -41,7 +41,7 @@ pub fn format_url_for_computers(url: &str) -> String {
     parsed.search = parsed.search.map(encode);
     parsed.pathname = parsed.pathname.map(encode);
 
-    parsed.format()
+    parsed.to_string()
 }
 
 
@@ -85,7 +85,7 @@ fn elide_text(mut text: String, max: usize) -> String {
 // If at any point of the time url becomes small enough, return it
 //
 fn elide_url(mut url: Url, max: usize) -> String {
-    let mut url_str = url.format();
+    let mut url_str = url.to_string();
     let query_length = url.search.as_ref().map(|s| s.len()).unwrap_or_default() +
                        url.hash.as_ref().map(|s| s.len()).unwrap_or_default();
 
@@ -121,7 +121,7 @@ fn elide_url(mut url: Url, max: usize) -> String {
             components.pop();
             let new_pathname = format!("{}/…/{}", components.join("/"), filename);
             url.pathname = Some(new_pathname);
-            url_str = url.format();
+            url_str = url.to_string();
 
             if url_str.chars().count() <= max_path_length {
                 return elide_text(url_str, max);
@@ -145,7 +145,7 @@ fn elide_url(mut url: Url, max: usize) -> String {
                 subdomains.remove(0);
                 let new_hostname = subdomains.join(".");
                 url.hostname = Some(new_hostname);
-                url_str = url.format();
+                url_str = url.to_string();
 
                 if url_str.chars().count() <= max_path_length {
                     return elide_text(url_str, max);
@@ -171,7 +171,7 @@ fn elide_url(mut url: Url, max: usize) -> String {
                 subdomains.remove(0);
                 let new_hostname = format!("…{}", subdomains.join("."));
                 url.hostname = Some(new_hostname);
-                url_str = url.format();
+                url_str = url.to_string();
                 was_elided = true;
 
                 if url_str.chars().count() <= max_path_length {

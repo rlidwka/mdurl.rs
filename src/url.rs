@@ -1,3 +1,4 @@
+use std::fmt::{Display, Write};
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 /// `Url` object is created and returned by the [mdurl::parse](parse) function.
@@ -66,52 +67,50 @@ pub struct Url {
 // Round-trip is guaranteed, so `format(parse(str))` always equals to `str`,
 // but if you write malformed data to `url`, you may get broken url as the output.
 //
-impl Url {
-    pub fn format(&self) -> String {
-        let mut result = String::new();
-
+impl Display for Url {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(s) = &self.protocol {
-            result.push_str(s);
+            f.write_str(s)?;
         }
 
         if self.slashes {
-            result.push_str("//");
+            f.write_str("//")?;
         }
 
         if let Some(s) = &self.auth {
-            result.push_str(s);
-            result.push('@');
+            f.write_str(s)?;
+            f.write_char('@')?;
         }
 
         if let Some(s) = &self.hostname {
             if s.contains(':') {
                 // ipv6 address
-                result.push('[');
-                result.push_str(s);
-                result.push(']');
+                f.write_char('[')?;
+                f.write_str(s)?;
+                f.write_char(']')?;
             } else {
-                result.push_str(s);
+                f.write_str(s)?;
             }
         }
 
         if let Some(s) = &self.port {
-            result.push(':');
-            result.push_str(s);
+            f.write_char(':')?;
+            f.write_str(s)?;
         }
 
         if let Some(s) = &self.pathname {
-            result.push_str(s);
+            f.write_str(s)?;
         }
 
         if let Some(s) = &self.search {
-            result.push_str(s);
+            f.write_str(s)?;
         }
 
         if let Some(s) = &self.hash {
-            result.push_str(s);
+            f.write_str(s)?;
         }
 
-        result
+        Ok(())
     }
 }
 
@@ -214,7 +213,7 @@ mod tests {
     fn round_trip() {
         for str in FIXTURES {
             let url = parse_url(str, false);
-            assert_eq!(url.format(), str);
+            assert_eq!(url.to_string(), str);
         }
     }
 }
