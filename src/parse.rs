@@ -44,64 +44,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashSet;
-
-#[derive(Debug, Default, PartialEq, Eq)]
-/// `Url` object is created and returned by the [mdurl::parse](parse) function.
-pub struct Url<'a> {
-    /// The `protocol` property identifies the URL's protocol scheme.
-    ///
-    /// For example: `"http:"`.
-    pub protocol: Option<&'a str>,
-
-    /// The `slashes` property is a `boolean` with a value of `true` if two ASCII
-    /// forward-slash characters (`/`) are required following the colon in the
-    /// `protocol`.
-    pub slashes: bool,
-
-    /// The `auth` property is the username and password portion of the URL, also
-    /// referred to as _userinfo_. This string subset follows the `protocol` and
-    /// double slashes (if present) and precedes the `host` component, delimited by `@`.
-    /// The string is either the username, or it is the username and password separated
-    /// by `:`.
-    ///
-    /// For example: `"user:pass"`.
-    pub auth: Option<&'a str>,
-
-    /// The `port` property is the numeric port portion of the `host` component.
-    ///
-    /// For example: `"8080"`.
-    pub port: Option<&'a str>,
-
-    /// The `hostname` property is the host name portion of the `host` component
-    /// _without_ the `port` included.
-    ///
-    /// For example: `"sub.example.com"`.
-    pub hostname: Option<&'a str>,
-
-    /// The `hash` property is the fragment identifier portion of the URL including the
-    /// leading `#` character.
-    ///
-    /// For example: `"#hash"`.
-    pub hash: Option<&'a str>,
-
-    /// The `search` property consists of the entire "query string" portion of the
-    /// URL, including the leading ASCII question mark (`?`) character.
-    ///
-    /// For example: `'?query=string'`.
-    ///
-    /// No decoding of the query string is performed.
-    pub search: Option<&'a str>,
-
-    /// The `pathname` property consists of the entire path section of the URL. This
-    /// is everything following the `host` (including the `port`) and before the start
-    /// of the `query` or `hash` components, delimited by either the ASCII question
-    /// mark (`?`) or hash (`#`) characters.
-    ///
-    /// For example: `'/p/a/t/h'`.
-    ///
-    /// No decoding of the path string is performed.
-    pub pathname: Option<&'a str>,
-}
+use crate::Url;
 
 // Reference: RFC 3986, RFC 1808, RFC 2396
 
@@ -189,7 +132,7 @@ static SLASHED_PROTOCOL : Lazy<HashSet<&'static str>> = Lazy::new(||
 ///    For instance, given `//foo/bar`, the result would be
 ///    `{host: 'foo', pathname: '/bar'}` rather than `{pathname: '//foo/bar'}`.
 ///
-pub fn parse(url: &str, slashes_denote_host: bool) -> Url {
+pub fn parse_url(url: &str, slashes_denote_host: bool) -> Url {
     let mut this = Url::default();
     let mut rest = url;
 
@@ -200,8 +143,8 @@ pub fn parse(url: &str, slashes_denote_host: bool) -> Url {
     if !slashes_denote_host && !url.contains('#') {
         // Try fast path regexp
         if let Some(simple_path) = SIMPLE_PATH_PATTERN.captures(rest) {
-            this.pathname = Some(simple_path.get(1).unwrap().as_str());
-            this.search = simple_path.get(2).map(|x| x.as_str());
+            this.pathname = Some(simple_path.get(1).unwrap().as_str().into());
+            this.search = simple_path.get(2).map(|x| x.as_str().into());
             return this;
         }
     }
@@ -209,7 +152,7 @@ pub fn parse(url: &str, slashes_denote_host: bool) -> Url {
     if let Some(proto_match) = PROTOCOL_PATTERN.captures(rest) {
         let proto = Some(proto_match.get(0).unwrap().as_str());
         //let lower_proto = proto.map(|s| s.to_ascii_lowercase());
-        this.protocol = proto;
+        this.protocol = proto.map(|s| s.into());
         rest = &rest[proto.unwrap().len()..];
     }
 
@@ -219,14 +162,14 @@ pub fn parse(url: &str, slashes_denote_host: bool) -> Url {
     // how the browser resolves relative URLs.
     if slashes_denote_host || this.protocol.is_some() || HOST_PATTERN.is_match(rest) {
         let slashes = rest.starts_with("//");
-        if slashes && !(this.protocol.is_some() && HOSTLESS_PROTOCOL.contains(this.protocol.unwrap())) {
+        if slashes && !(this.protocol.is_some() && HOSTLESS_PROTOCOL.contains(this.protocol.as_ref().unwrap().as_str())) {
             rest = &rest[2..];
             this.slashes = true;
         }
     }
 
-    if (this.protocol.is_none() || !HOSTLESS_PROTOCOL.contains(this.protocol.unwrap())) &&
-        (this.slashes || (this.protocol.is_some() && !SLASHED_PROTOCOL.contains(this.protocol.unwrap()))) {
+    if (this.protocol.is_none() || !HOSTLESS_PROTOCOL.contains(this.protocol.as_ref().unwrap().as_str())) &&
+        (this.slashes || (this.protocol.is_some() && !SLASHED_PROTOCOL.contains(this.protocol.as_ref().unwrap().as_str()))) {
 
         // there's a hostname.
         // the first instance of /, ?, ;, or # ends the host.
@@ -260,7 +203,7 @@ pub fn parse(url: &str, slashes_denote_host: bool) -> Url {
         // Now we have a portion which is definitely the auth.
         // Pull that off.
         if let Some(at_sign) = at_sign {
-            this.auth = Some(&rest[..at_sign]);
+            this.auth = Some(rest[..at_sign].into());
             rest = &rest[at_sign+1..];
         }
 
@@ -277,20 +220,20 @@ pub fn parse(url: &str, slashes_denote_host: bool) -> Url {
         if let Some(port_match) = PORT_PATTERN.captures(host) {
             let port = port_match.get(0).unwrap().as_str();
             if port != ":" {
-                this.port = Some(&port[1..]);
+                this.port = Some(port[1..].into());
             }
             host = &host[..host.len()-port.len()];
         }
-        this.hostname = Some(host);
+        this.hostname = Some(host.into());
 
         // if hostname begins with [ and ends with ]
         // assume that it's an IPv6 address.
-        let ipv6_hostname = this.hostname.unwrap().starts_with('[') &&
-            this.hostname.unwrap().ends_with(']');
+        let check_hostname = this.hostname.as_ref().unwrap().as_str();
+        let ipv6_hostname = check_hostname.starts_with('[') && check_hostname.ends_with(']');
 
         // validate a little.
         if !ipv6_hostname {
-            let hostparts = this.hostname.unwrap().split('.').collect::<Vec<_>>();
+            let hostparts = this.hostname.as_ref().unwrap().split('.').collect::<Vec<_>>();
             for (i, part) in hostparts.iter().enumerate() {
                 if part.is_empty() { continue; }
                 if !HOSTNAME_PART_PATTERN.is_match(part) {
@@ -313,44 +256,44 @@ pub fn parse(url: &str, slashes_denote_host: bool) -> Url {
                             //rest = not_host.join(".") + rest;
                             rest = &url[url.len()-rest.len()-not_host.join(".").len()..];
                         }
-                        // same as:
-                        //this.hostname = Some(valid_parts.join("."));
-                        this.hostname = Some(&url[url.len()-rest.len()-valid_parts.join(".").len()..url.len()-rest.len()]);
+                        this.hostname = Some(valid_parts.join("."));
+                        //this.hostname = Some(&url[url.len()-rest.len()-valid_parts.join(".").len()..url.len()-rest.len()]);
                         break;
                     }
                 }
             }
         }
 
-        if this.hostname.unwrap().len() > HOSTNAME_MAX_LEN {
-            this.hostname = Some("");
+        if this.hostname.as_ref().unwrap().len() > HOSTNAME_MAX_LEN {
+            this.hostname = Some(String::new());
         }
 
         // strip [ and ] from the hostname
         // the host field still retains them, though
         if ipv6_hostname {
-            this.hostname = Some(&this.hostname.unwrap()[1..this.hostname.unwrap().len()-1]);
+            let hostname = this.hostname.as_ref().unwrap().as_str();
+            this.hostname = Some(hostname[1..hostname.len()-1].into());
         }
     }
 
     // chop off from the tail first.
     if let Some(hash) = rest.find('#') {
         // got a fragment string.
-        this.hash = Some(&rest[hash..]);
+        this.hash = Some(rest[hash..].into());
         rest = &rest[0..hash];
     }
     if let Some(qm) = rest.find('?') {
-        this.search = Some(&rest[qm..]);
+        this.search = Some(rest[qm..].into());
         rest = &rest[0..qm];
     }
     if !rest.is_empty() {
-        this.pathname = Some(rest);
+        this.pathname = Some(rest.into());
     }
     if this.protocol.is_some() &&
-            SLASHED_PROTOCOL.contains(this.protocol.unwrap().to_ascii_lowercase().as_str()) &&
-            this.hostname.is_some() && !this.hostname.unwrap().is_empty() &&
+            SLASHED_PROTOCOL.contains(this.protocol.as_ref().unwrap().to_ascii_lowercase().as_str()) &&
+            this.hostname.is_some() && !this.hostname.as_ref().unwrap().is_empty() &&
             this.pathname.is_none() {
-        this.pathname = Some("");
+        this.pathname = Some(String::new());
     }
 
     this

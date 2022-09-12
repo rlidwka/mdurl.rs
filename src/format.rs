@@ -1,161 +1,276 @@
-use crate::Url;
+use once_cell::sync::Lazy;
+use regex::Regex;
+use crate::{AsciiSet, Url};
 
-/// Return a formatted URL string derived from [Url] object.
-///
-/// It simply concatenates whatever is in the input, and does no validation
-/// or escaping of any kind.
-///
-/// Round-trip is guaranteed, so `format(parse(str))` always equals to `str`,
-/// but if you write malformed data to `url`, you may get broken url as the output.
-///
-pub fn format(url: Url) -> String {
-    let mut result = String::new();
+static HTTPS_OR_MAILTO : Lazy<Regex> = Lazy::new(||
+    Regex::new("(?i)^(https?:|mailto:)$").unwrap()
+);
 
-    if let Some(s) = url.protocol {
-        result.push_str(s);
-    }
+static IP_HOST_CHECK : Lazy<Regex> = Lazy::new(||
+    Regex::new(r#"\.\d"#).unwrap()
+);
 
-    if url.slashes {
-        result.push_str("//");
-    }
+// Decode hostname/path and trim url
+//  - url_str    - url to decode
+//  - max_length - maximum allowed length for this url
+//
+pub fn format_url_for_computers(url: &str) -> String {
+    let mut parsed = crate::parse_url(url, true);
 
-    if let Some(s) = url.auth {
-        result.push_str(s);
-        result.push('@');
-    }
-
-    if let Some(s) = url.hostname {
-        if s.contains(':') {
-            // ipv6 address
-            result.push('[');
-            result.push_str(s);
-            result.push(']');
-        } else {
-            result.push_str(s);
+    if let Some(hostname) = parsed.hostname.as_ref() {
+        // Encode hostnames in urls like:
+        // `http://host/`, `https://host/`, `mailto:user@host`, `//host/`
+        //
+        // We don't encode unknown schemas, because it's likely that we encode
+        // something we shouldn't (e.g. `skype:name` treated as `skype:host`)
+        //
+        if parsed.protocol.is_none() || HTTPS_OR_MAILTO.is_match(parsed.protocol.as_ref().unwrap()) {
+            if let Ok(x) = idna::domain_to_ascii(hostname) {
+                parsed.hostname = Some(x);
+            }
         }
     }
 
-    if let Some(s) = url.port {
-        result.push(':');
-        result.push_str(s);
+    let encode = |s: String| {
+        const SET : AsciiSet = crate::AsciiSet::from(";/?:@&=+$,-_.!~*'()#");
+        crate::percent_encode(&s, SET, true).to_string()
+    };
+
+    parsed.auth = parsed.auth.map(encode);
+    parsed.hash = parsed.hash.map(encode);
+    parsed.search = parsed.search.map(encode);
+    parsed.pathname = parsed.pathname.map(encode);
+
+    parsed.format()
+}
+
+
+// if string char length > max then truncate string and add "..."
+fn elide_text(mut text: String, max: usize) -> String {
+    for (count, (offset, _)) in text.char_indices().enumerate() {
+        if count >= max {
+            text.truncate(offset);
+            text.push('…');
+            break;
+        }
+    }
+    text
+}
+
+
+// Replace long parts of the urls with elisions.
+//
+// This algorithm is similar to one used in chromium:
+// https://chromium.googlesource.com/chromium/src.git/+/master/chrome/browser/ui/elide_url.cc
+//
+//  1. Chop off path, e.g.
+//
+//     "/foo/bar/baz/quux" -> "/foo/bar/…/quux" -> "/foo/…/quux" -> "/…/quux"
+//
+//  2. Get rid of 2+ level subdomains, e.g.
+//
+//     "foo.bar.baz.example.com" -> "…bar.baz.example.com" ->
+//     "…baz.example.com" -> "…example.com"
+//
+//     Exception 1: if 2nd level domain is 1-3 letters, truncate to 3rd level:
+//
+//     "foo.bar.baz.co.uk" -> ... -> "…baz.co.uk"
+//
+//     Exception 2: don't change if it is 3rd level domain which has short (1-4 characters) 3rd level
+//     "foo.example.org" -> "foo.example.org"
+//     "bar.foo.example.org" -> "…example.org"
+//
+//  3. Truncate the rest of the url
+//
+// If at any point of the time url becomes small enough, return it
+//
+fn elide_url(mut url: Url, max: usize) -> String {
+    let mut url_str = url.format();
+    let query_length = url.search.as_ref().map(|s| s.len()).unwrap_or_default() +
+                       url.hash.as_ref().map(|s| s.len()).unwrap_or_default();
+
+    // Maximum length of url without query+hash part
+    //
+    let max_path_length = max + query_length;
+    let max_path_length = if max_path_length < 2 { 0 } else { max_path_length - 2 };
+
+    // Here and below this `if` condition means:
+    //
+    // Assume that we can safely truncate querystring at anytime without
+    // readability loss up to "?".
+    //
+    // So if url without hash/search fits, return it, eliding the end
+    // e.g. "example.org/path/file?q=12345" -> "example.org/path/file?q=12..."
+    //
+    if url_str.chars().count() <= max_path_length {
+        return elide_text(url_str, max);
     }
 
-    if let Some(s) = url.pathname {
-        result.push_str(s);
+    // Try to elide path, e.g. "/foo/bar/baz/quux" -> "/foo/.../quux"
+    //
+    if let Some(pathname) = url.pathname.clone() {
+        let mut components = pathname.split('/').collect::<Vec<_>>();
+        let mut filename = components.pop().unwrap_or_default().to_owned();
+
+        if filename.is_empty() && !components.is_empty() {
+            filename = components.pop().unwrap().to_owned();
+            filename.push('/');
+        }
+
+        while components.len() > 1 {
+            components.pop();
+            let new_pathname = format!("{}/…/{}", components.join("/"), filename);
+            url.pathname = Some(new_pathname);
+            url_str = url.format();
+
+            if url_str.chars().count() <= max_path_length {
+                return elide_text(url_str, max);
+            }
+        }
     }
 
-    if let Some(s) = url.search {
-        result.push_str(s);
+    // Elide subdomains up to 2nd level,
+    // e.g. "foo.bar.example.org" -> "...bar.example.org",
+    //
+    // Do NOT elide IP addresses here
+    //
+    if let Some(hostname) = url.hostname.clone() {
+        if !IP_HOST_CHECK.is_match(&hostname) {
+            let mut subdomains = hostname.split('.').collect::<Vec<_>>();
+            let mut was_elided = false;
+
+            // If it starts with "www", just remove it
+            //
+            if subdomains.first() == Some(&"www") && subdomains.len() > 2 {
+                subdomains.remove(0);
+                let new_hostname = subdomains.join(".");
+                url.hostname = Some(new_hostname);
+                url_str = url.format();
+
+                if url_str.chars().count() <= max_path_length {
+                    return elide_text(url_str, max);
+                }
+            }
+
+            loop {
+                // truncate up to 2nd level domain, e.g. `example.com`
+                if subdomains.len() <= 2 { break; }
+
+                // if 2nd level is short enough, truncate up to 3rd level, e.g. `example.co.uk`
+                // (ideally, we'd use https://publicsuffix.org/list/public_suffix_list.dat,
+                // but the list is too large)
+                if subdomains.len() == 3 && subdomains.get(1).unwrap().len() < 3 {
+                    break;
+                }
+
+                // if 3rd level is short enough (1-4 characters), keep it as is
+                if !was_elided && subdomains.len() == 3 && subdomains.first().unwrap().len() <= 4 {
+                    break;
+                }
+
+                subdomains.remove(0);
+                let new_hostname = format!("…{}", subdomains.join("."));
+                url.hostname = Some(new_hostname);
+                url_str = url.format();
+                was_elided = true;
+
+                if url_str.chars().count() <= max_path_length {
+                    return elide_text(url_str, max);
+                }
+            }
+        }
     }
 
-    if let Some(s) = url.hash {
-        result.push_str(s);
+    elide_text(url_str, max)
+}
+
+
+// Decode hostname/path and trim url
+//  - url        - url to decode
+//  - max_length - maximum allowed length for this url
+//
+pub fn format_url_for_humans(url: &str, max_length: usize) -> String {
+    let mut parsed = crate::parse_url(url, true);
+    let url_with_slashes;
+
+    // urls without host and protocol, e.g. "example.org/foo"
+    if parsed.protocol.is_none() && !parsed.slashes && parsed.hostname.is_none() {
+        url_with_slashes = format!("//{url}");
+        parsed = crate::parse_url(&url_with_slashes, true);
     }
 
-    result
+    if let Some(hostname) = parsed.hostname.as_ref() {
+        // Encode hostnames in urls like:
+        // `http://host/`, `https://host/`, `mailto:user@host`, `//host/`
+        //
+        // We don't encode unknown schemas, because it's likely that we encode
+        // something we shouldn't (e.g. `skype:name` treated as `skype:host`)
+        //
+        if parsed.protocol.is_none() || HTTPS_OR_MAILTO.is_match(parsed.protocol.as_ref().unwrap()) {
+            let (x, _) = idna::domain_to_unicode(hostname);
+            parsed.hostname = Some(x);
+        }
+    }
+
+    let decode = |s: String| {
+        // Decode url-encoded characters
+        //
+        // add '%' to exclude list because of https://github.com/markdown-it/markdown-it/issues/720
+        const SET : AsciiSet = crate::AsciiSet::from(";/?:@&=+$,#").add(b'%');
+        crate::percent_decode(&s, SET).to_string()
+    };
+
+    parsed.auth = parsed.auth.map(decode);
+    parsed.hash = parsed.hash.map(decode);
+    parsed.search = parsed.search.map(decode);
+    parsed.pathname = parsed.pathname.map(decode);
+
+
+    // Remove trailing slash: http://example.org/ → http://example.org
+    //
+    if let Some(pathname) = parsed.pathname.as_ref() {
+        if pathname == "/" && parsed.search.is_none() && parsed.hash.is_none() {
+            parsed.pathname = Some(String::new());
+        }
+    }
+
+    // Omit protocol if it's http, https or mailto
+    //
+    if parsed.protocol.is_some() {
+        if HTTPS_OR_MAILTO.is_match(parsed.protocol.as_ref().unwrap()) {
+            parsed.protocol = None;
+            parsed.slashes = false;
+        }
+    } else {
+        parsed.slashes = false;
+    }
+
+    elide_url(parsed, max_length)
 }
 
 
 #[cfg(test)]
 mod tests {
-    use crate::parse;
-    use super::format;
-
-    const FIXTURES : [ &str; 87 ] = [
-        "//some_path",
-        "HTTP://www.example.com/",
-        "HTTP://www.example.com",
-        "http://www.ExAmPlE.com/",
-        "http://user:pw@www.ExAmPlE.com/",
-        "http://USER:PW@www.ExAmPlE.com/",
-        "http://user@www.example.com/",
-        "http://user%3Apw@www.example.com/",
-        "http://x.com/path?that\'s#all, folks",
-        "HTTP://X.COM/Y",
-        "http://x.y.com+a/b/c",
-        "HtTp://x.y.cOm;a/b/c?d=e#f g<h>i",
-        "HtTp://x.y.cOm;A/b/c?d=e#f g<h>i",
-        "http://x...y...#p",
-        "http://x/p/\"quoted\"",
-        "<http://goo.corn/bread> Is a URL!",
-        "http://www.narwhaljs.org/blog/categories?id=news",
-        "http://mt0.google.com/vt/lyrs=m@114&hl=en&src=api&x=2&y=2&z=3&s=",
-        "http://mt0.google.com/vt/lyrs=m@114???&hl=en&src=api&x=2&y=2&z=3&s=",
-        "http://user:pass@mt0.google.com/vt/lyrs=m@114???&hl=en&src=api&x=2&y=2&z=3&s=",
-        "file:///etc/passwd",
-        "file://localhost/etc/passwd",
-        "file://foo/etc/passwd",
-        "file:///etc/node/",
-        "file://localhost/etc/node/",
-        "file://foo/etc/node/",
-        "http:/baz/../foo/bar",
-        "http://user:pass@example.com:8000/foo/bar?baz=quux#frag",
-        "//user:pass@example.com:8000/foo/bar?baz=quux#frag",
-        "/foo/bar?baz=quux#frag",
-        "http:/foo/bar?baz=quux#frag",
-        "mailto:foo@bar.com?subject=hello",
-        "javascript:alert(\'hello\');",
-        "xmpp:isaacschlueter@jabber.org",
-        "http://atpass:foo%40bar@127.0.0.1:8080/path?search=foo#bar",
-        "svn+ssh://foo/bar",
-        "dash-test://foo/bar",
-        "dash-test:foo/bar",
-        "dot.test://foo/bar",
-        "dot.test:foo/bar",
-        "http://www.日本語.com/",
-        "http://example.Bücher.com/",
-        "http://www.Äffchen.com/",
-        "http://www.Äffchen.cOm;A/b/c?d=e#f g<h>i",
-        "http://SÉLIER.COM/",
-        "http://ﻞﻴﻬﻣﺎﺒﺘﻜﻠﻣﻮﺸﻋﺮﺒﻳ؟.ﻱ؟/",
-        "http://➡.ws/➡",
-        "http://bucket_name.s3.amazonaws.com/image.jpg",
-        "git+http://github.com/joyent/node.git",
-        "local1@domain1",
-        "www.example.com",
-        "[fe80::1]",
-        "coap://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]",
-        "coap://[1080:0:0:0:8:800:200C:417A]:61616/",
-        "http://user:password@[3ffe:2a00:100:7031::1]:8080",
-        "coap://u:p@[::192.9.5.5]:61616/.well-known/r?n=Temperature",
-        "http://example.com:",
-        "http://example.com:/a/b.html",
-        "http://example.com:?a=b",
-        "http://example.com:#abc",
-        "http://[fe80::1]:/a/b?a=b#abc",
-        "http://-lovemonsterz.tumblr.com/rss",
-        "http://-lovemonsterz.tumblr.com:80/rss",
-        "http://user:pass@-lovemonsterz.tumblr.com/rss",
-        "http://user:pass@-lovemonsterz.tumblr.com:80/rss",
-        "http://_jabber._tcp.google.com/test",
-        "http://user:pass@_jabber._tcp.google.com/test",
-        "http://_jabber._tcp.google.com:80/test",
-        "http://user:pass@_jabber._tcp.google.com:80/test",
-        "http://x:1/' <>\"`/{}|\\^~`/",
-        "http://a@b@c/",
-        "http://a@b?@c",
-        "http://a\r\" \t\n<'b:b@c\r\nd/e?f",
-        "git+ssh://git@github.com:npm/npm",
-        "http://example.com?foo=bar#frag",
-        "http://example.com?foo=@bar#frag",
-        "http://example.com?foo=/bar/#frag",
-        "http://example.com?foo=?bar/#frag",
-        "http://example.com#frag=?bar/#frag",
-        "http://google.com\" onload=\"alert(42)/",
-        "http://a.com/a/b/c?s#h",
-        "http://atpass:foo%40bar@127.0.0.1/",
-        "http://atslash%2F%40:%2F%40@foo/",
-        "coap:u:p@[::1]:61616/.well-known/r?n=Temperature",
-        "coap:[fedc:ba98:7654:3210:fedc:ba98:7654:3210]:61616/s/stopButton",
-        "http://ex.com/foo%3F100%m%23r?abc=the%231?&foo=bar#frag",
-        "http://ex.com/fooA100%mBr?abc=the%231?&foo=bar#frag",
-    ];
+    use super::format_url_for_humans;
 
     #[test]
-    fn round_trip() {
-        for str in FIXTURES {
-            let url = parse(str, false);
-            assert_eq!(format(url), str);
-        }
+    fn should_truncate_domains() {
+        let source = "https://whatever.example.com/foobarbazquux?query=string";
+        let expected = "…example.com/foobarb…";
+        assert_eq!(format_url_for_humans(source, 20), expected);
+    }
+
+    #[test]
+    fn should_show_common_2nd_level_domains() {
+        let source = "https://whatever.example.co.uk/foobarbazquux?query=string";
+        let expected = "…example.co.uk/fooba…";
+        assert_eq!(format_url_for_humans(source, 20), expected);
+    }
+
+    #[test]
+    fn should_show_4_letter_3rd_level_domains() {
+        let source = "https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html";
+        let expected = "blog.chromium.org/…/no-more-mixed-messag…";
+        assert_eq!(format_url_for_humans(source, 40), expected);
     }
 }

@@ -6,8 +6,15 @@ Copyright (c) 2022 Alex Kocharin.
 Original library https://github.com/markdown-it/mdurl:
 Copyright (c) 2015 Vitaly Puzrin, Alex Kocharin.
 
-Parsing algorithm is based on node.js `url` code:
+Parsing algorithm is based on node.js `url` code,
+https://github.com/nodejs/node:
 Copyright Joyent, Inc. and other Node contributors. All rights reserved.
+
+Url formatting algorithm is based on nodeca `beautify_url` code,
+https://github.com/nodeca/nodeca.core:
+Copyright (C) 2012 by Vitaly Puzrin
+
+All parts included are released under The MIT License.
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
