@@ -1,6 +1,7 @@
 use once_cell::sync::Lazy;
 use regex::Regex;
-use crate::{AsciiSet, Url};
+use crate::Url;
+use crate::urlencode::{DECODE_DEFAULT_CHARS, ENCODE_DEFAULT_CHARS};
 
 static HTTPS_OR_MAILTO : Lazy<Regex> = Lazy::new(||
     Regex::new("(?i)^(https?:|mailto:)$").unwrap()
@@ -32,8 +33,7 @@ pub fn format_url_for_computers(url: &str) -> String {
     }
 
     let encode = |s: String| {
-        const SET : AsciiSet = crate::AsciiSet::from(";/?:@&=+$,-_.!~*'()#");
-        crate::percent_encode(&s, SET, true).to_string()
+        crate::urlencode::encode(&s, ENCODE_DEFAULT_CHARS, true).to_string()
     };
 
     parsed.auth = parsed.auth.map(encode);
@@ -217,8 +217,7 @@ pub fn format_url_for_humans(url: &str, max_length: usize) -> String {
         // Decode url-encoded characters
         //
         // add '%' to exclude list because of https://github.com/markdown-it/markdown-it/issues/720
-        const SET : AsciiSet = crate::AsciiSet::from(";/?:@&=+$,#").add(b'%');
-        crate::percent_decode(&s, SET).to_string()
+        crate::urlencode::decode(&s, DECODE_DEFAULT_CHARS.add(b'%')).to_string()
     };
 
     parsed.auth = parsed.auth.map(decode);

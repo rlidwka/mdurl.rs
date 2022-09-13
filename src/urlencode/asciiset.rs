@@ -21,7 +21,7 @@ impl AsciiSet {
         Self(self.0 & !(1 << byte))
     }
 
-    pub const fn add_alphanumeric(&self) -> Self {
+    pub(super) const fn add_alphanumeric(&self) -> Self {
         Self(self.0 | 0x07fffffe07fffffe03ff000000000000)
     }
 

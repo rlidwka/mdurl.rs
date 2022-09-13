@@ -3,14 +3,7 @@
 #![warn(clippy::manual_assert)]
 #![warn(clippy::semicolon_if_nothing_returned)]
 
-mod asciiset;
-pub use asciiset::AsciiSet;
-
-mod encode;
-pub use encode::percent_encode;
-
-mod decode;
-pub use decode::percent_decode;
+pub mod urlencode;
 
 mod parse;
 pub use parse::parse_url;
