@@ -190,6 +190,7 @@ fn elide_url(mut url: Url, max: usize) -> String {
 //  - max_length - maximum allowed length for this url
 //
 pub fn format_url_for_humans(url: &str, max_length: usize) -> String {
+    //if max_length == 0 { max_length = usize::MAX; }
     let mut parsed = crate::parse_url(url, true);
     let url_with_slashes;
 

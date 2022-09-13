@@ -22,30 +22,16 @@ pub struct Url {
     /// For example: `"user:pass"`.
     pub auth: Option<String>,
 
-    /// The `port` property is the numeric port portion of the `host` component.
-    ///
-    /// For example: `"8080"`.
-    pub port: Option<String>,
-
     /// The `hostname` property is the host name portion of the `host` component
     /// _without_ the `port` included.
     ///
     /// For example: `"sub.example.com"`.
     pub hostname: Option<String>,
 
-    /// The `hash` property is the fragment identifier portion of the URL including the
-    /// leading `#` character.
+    /// The `port` property is the numeric port portion of the `host` component.
     ///
-    /// For example: `"#hash"`.
-    pub hash: Option<String>,
-
-    /// The `search` property consists of the entire "query string" portion of the
-    /// URL, including the leading ASCII question mark (`?`) character.
-    ///
-    /// For example: `'?query=string'`.
-    ///
-    /// No decoding of the query string is performed.
-    pub search: Option<String>,
+    /// For example: `"8080"`.
+    pub port: Option<String>,
 
     /// The `pathname` property consists of the entire path section of the URL. This
     /// is everything following the `host` (including the `port`) and before the start
@@ -56,6 +42,20 @@ pub struct Url {
     ///
     /// No decoding of the path string is performed.
     pub pathname: Option<String>,
+
+    /// The `search` property consists of the entire "query string" portion of the
+    /// URL, including the leading ASCII question mark (`?`) character.
+    ///
+    /// For example: `'?query=string'`.
+    ///
+    /// No decoding of the query string is performed.
+    pub search: Option<String>,
+
+    /// The `hash` property is the fragment identifier portion of the URL including the
+    /// leading `#` character.
+    ///
+    /// For example: `"#hash"`.
+    pub hash: Option<String>,
 }
 
 
