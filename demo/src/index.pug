@@ -1,0 +1,49 @@
+doctype html
+html(lang='en')
+    head
+        title mdurl.rs demo
+        link(rel='stylesheet', href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css')
+        link(rel='stylesheet', href=require('./index.styl'))
+
+    body
+        .gh-ribbon
+            a(href='https://github.com/rlidwka/mdurl.rs') Fork me on GitHub
+
+        .container
+            .row
+                .col-md-6
+                    .header
+                        a(href="https://github.com/rlidwka/mdurl.rs") mdurl.rs demo
+            .row
+                .col-md-8
+                    .mb-3
+                        label.form-label(for='source') Enter any URL here:
+                        // this url is for demonstration purposes only (used to test handing of "www." prefix,
+                        // path shortening, handling of query strings, etc.)
+                        textarea#source.form-control(autofocus)
+                            = 'https://www.reddit.com/r/programming/comments/vxttiq/comment/ifyqsqt/?utm_source=reddit&utm_medium=web2x&context=3'
+                        .form-text
+                            | This can be absolute url, relative url, encoded, decoded, or any random thing you can come up with.
+                    .mb-3
+                        .fmturl-label
+                            .fmturl-label-text
+                                label.form-label(for='source') Formatted URL (for humans):
+                            .fmturl-label-maxlen
+                                label.form-label(for='maxlen') max length:
+                                input#maxlen.form-control(type='number', min=0, value=42)
+                        textarea#decoded.form-control(readonly)
+                        .form-text
+                            | This is similar to what Chromium would show you in status bar on hover. Non-essential parts are
+                            | removed, then URL is shortened to fit into N character limit.
+                    .mb-3
+                        label.form-label(for='source') Encoded URL (for computers):
+                        textarea#encoded.form-control(readonly)
+                        .form-text
+                            | Non-ascii parts will be encoded, but whatever was already encoded stays as is.
+
+                .col-md-4
+                    label.form-label Debug representation:
+                    #debug
+                        .loading-banner Loading...
+
+        script(src=require('../pkg'))
