@@ -7,11 +7,29 @@ static URLENCODED_SEQUENCE : Lazy<Regex> = Lazy::new(||
     Regex::new(r#"(%[a-fA-F0-9]{2})+"#).unwrap()
 );
 
+/// Equivalent to [decodeURI](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURI)
+/// character set.
+///
+/// `decode(s, DECODE_DEFAULT_CHARS)` decodes all characters except `;/?:@&=+$,#`.
 pub const DECODE_DEFAULT_CHARS   : AsciiSet = AsciiSet::from(";/?:@&=+$,#");
+/// Equivalent to [decodeURIComponent](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/decodeURIComponent)
+/// character set.
+///
+/// `decode(s, DECODE_COMPONENT_CHARS)` decodes all characters.
 pub const DECODE_COMPONENT_CHARS : AsciiSet = AsciiSet::from("");
 
-/// Decode percent-encoded string.
+/// Decode percent-encoded characters, e.g. `%26` -> `&`.
 ///
+///  - string        - string to decode
+///  - exclude       - list of characters to ignore
+///
+/// ```rust
+/// use mdurl::urlencode::AsciiSet;
+/// use mdurl::urlencode::decode;
+///
+/// const SAFE_SET : AsciiSet = AsciiSet::from(";/?:@&=+$,#");
+/// assert_eq!(decode("%5Bhello%5D", SAFE_SET), "[hello]");
+/// ```
 pub fn decode(string: &str, exclude: AsciiSet) -> Cow<str> {
     URLENCODED_SEQUENCE.replace_all(string, |caps: &regex::Captures| -> String {
         let mut result = Vec::new();

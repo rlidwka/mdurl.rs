@@ -2,6 +2,7 @@ use std::fmt::{Display, Write};
 
 #[derive(Debug, Default, PartialEq, Eq, Clone)]
 /// `Url` object is created and returned by the [parse_url](crate::parse_url) function.
+///
 pub struct Url {
     /// The `protocol` property identifies the URL's protocol scheme.
     ///

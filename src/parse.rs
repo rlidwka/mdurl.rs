@@ -132,6 +132,8 @@ static SLASHED_PROTOCOL : Lazy<HashSet<&'static str>> = Lazy::new(||
 ///    For instance, given `//foo/bar`, the result would be
 ///    `{host: 'foo', pathname: '/bar'}` rather than `{pathname: '//foo/bar'}`.
 ///
+/// This is a non-standard parsing algorithm derived from node.js legacy URL parser.
+///
 pub fn parse_url(url: &str, slashes_denote_host: bool) -> Url {
     let mut this = Url::default();
     let mut rest = url;

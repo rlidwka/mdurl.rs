@@ -5,19 +5,31 @@
 pub struct AsciiSet(u128);
 
 impl AsciiSet {
+    /// Create empty ASCII-set (alphanumerical characters will still be implied by [encode](crate::urlencode::encode)).
     pub const fn new() -> Self {
         Self(0)
     }
 
+    /// Create ASCII-set from a specific string.
+    ///
+    /// all characters must be in `0x00..0x7f` range, function will panic otherwise
     pub const fn from(str: &str) -> Self {
         Self::new().add_many(str.as_bytes(), 0)
     }
 
+    /// Add a character to the set.
+    ///
+    /// `byte` must be in `0x00..0x7f` range, function will panic otherwise
     pub const fn add(&self, byte: u8) -> Self {
+        debug_assert!(byte <= 0x7f);
         Self(self.0 | 1 << byte)
     }
 
+    /// Remove a character from the set.
+    ///
+    /// `byte` must be in `0x00..0x7f` range, function will panic otherwise
     pub const fn remove(&self, byte: u8) -> Self {
+        debug_assert!(byte <= 0x7f);
         Self(self.0 & !(1 << byte))
     }
 
@@ -25,7 +37,11 @@ impl AsciiSet {
         Self(self.0 | 0x07fffffe07fffffe03ff000000000000)
     }
 
+    /// Check if a character is in the set.
+    ///
+    /// `byte` must be in `0x00..0x7f` range, function will panic otherwise
     pub const fn has(&self, byte: u8) -> bool {
+        debug_assert!(byte <= 0x7f);
         self.0 & 1 << byte != 0
     }
 
@@ -93,5 +109,17 @@ mod tests {
         assert_eq!(set_str, from_str);
         assert!(set.has(b'x'));
         assert!(set.has(b'!'));
+    }
+
+    #[test]
+    #[should_panic]
+    fn add_non_ascii() {
+        AsciiSet::from("β");
+    }
+
+    #[test]
+    #[should_panic]
+    fn add_higher_byte() {
+        AsciiSet::new().add(0xfa);
     }
 }

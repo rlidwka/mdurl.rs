@@ -3,11 +3,18 @@ use super::AsciiSet;
 
 const DIGITS : &[ u8; 16 ] = b"0123456789ABCDEF";
 
+/// Equivalent to [encodeURI](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURI)
+/// character set.
+///
+/// `encode(s, ENCODE_DEFAULT_CHARS)` escapes all characters except `A-Za-z0-9;/?:@&=+$,-_.!~*'()#`.
 pub const ENCODE_DEFAULT_CHARS   : AsciiSet = AsciiSet::from(";/?:@&=+$,-_.!~*'()#");
+/// Equivalent to [encodeURIComponent](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent)
+/// characer set.
+///
+/// `encode(s, ENCODE_COMPONENT_CHARS)` escapes all characters except `A-Za-z0-9-_.!~*'()"`.
 pub const ENCODE_COMPONENT_CHARS : AsciiSet = AsciiSet::from("-_.!~*'()");
 
-/// Encode unsafe characters with percent-encoding, skipping already
-/// encoded sequences.
+/// Encode unsafe characters, e.g. `&` -> `%26`.
 ///
 ///  - string        - string to encode
 ///  - exclude       - list of characters to ignore (in addition to a-zA-Z0-9)

@@ -3,6 +3,8 @@
 #![warn(clippy::manual_assert)]
 #![warn(clippy::semicolon_if_nothing_returned)]
 
+#[doc(hidden)]
+// not part of official API, see comments in that module
 pub mod urlencode;
 
 mod parse;
