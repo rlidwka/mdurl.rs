@@ -125,9 +125,20 @@ static SLASHED_PROTOCOL : Lazy<HashSet<&'static str>> = Lazy::new(||
 
 /// Parse URL string and return a [Url] object.
 ///
-///  - url - The URL string to parse.
+/// This function uses a non-standard parsing algorithm derived from node.js
+/// legacy URL parser.
 ///
-/// This is a non-standard parsing algorithm derived from node.js legacy URL parser.
+/// There are three major differences from [url](https://crates.io/crates/url) crate:
+///
+///  - It returns `Url`, not `Result<Url>`. We try our best to parse any urls,
+///    but given nonsensical input it may produce nonsensical output.
+///
+///  - No normalization of any kind is provided, and no information is lost during
+///    parsing. For example, hostname may be lowercase or uppercase, punycoded or not.
+///    It is up to you to normalize these.
+///
+///  - You can freely modify resulting `Url` object, setting any values that you want.
+///    `Url::to_string()` will reflect your changes as is.
 ///
 pub fn parse_url(url: &str) -> Url {
     // - slashes_denote_host - If `true`, the first token after the literal

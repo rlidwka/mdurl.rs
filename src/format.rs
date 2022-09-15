@@ -11,9 +11,11 @@ static IP_HOST_CHECK : Lazy<Regex> = Lazy::new(||
     Regex::new(r#"\.\d"#).unwrap()
 );
 
-// Decode hostname/path and trim url
-//  - url_str    - url to decode
-//
+/// Normalize and encode url.
+///
+///  - hostname is punycode-encoded and lowercased
+///  - all parts of url that aren't already percent-encoded will be
+///
 pub fn format_url_for_computers(url: &str) -> String {
     let mut parsed = crate::parse_url(url);
 
@@ -56,33 +58,6 @@ fn elide_text(mut text: String, max: usize) -> String {
     text
 }
 
-
-// Replace long parts of the urls with elisions.
-//
-// This algorithm is similar to one used in chromium:
-// https://chromium.googlesource.com/chromium/src.git/+/master/chrome/browser/ui/elide_url.cc
-//
-//  1. Chop off path, e.g.
-//
-//     "/foo/bar/baz/quux" -> "/foo/bar/…/quux" -> "/foo/…/quux" -> "/…/quux"
-//
-//  2. Get rid of 2+ level subdomains, e.g.
-//
-//     "foo.bar.baz.example.com" -> "…bar.baz.example.com" ->
-//     "…baz.example.com" -> "…example.com"
-//
-//     Exception 1: if 2nd level domain is 1-3 letters, truncate to 3rd level:
-//
-//     "foo.bar.baz.co.uk" -> ... -> "…baz.co.uk"
-//
-//     Exception 2: don't change if it is 3rd level domain which has short (1-4 characters) 3rd level
-//     "foo.example.org" -> "foo.example.org"
-//     "bar.foo.example.org" -> "…example.org"
-//
-//  3. Truncate the rest of the url
-//
-// If at any point of the time url becomes small enough, return it
-//
 fn elide_url(mut url: Url, max: usize) -> String {
     let mut url_str = url.to_string();
     let query_length = url.search.as_ref().map(|s| s.len()).unwrap_or_default() +
@@ -184,10 +159,40 @@ fn elide_url(mut url: Url, max: usize) -> String {
 }
 
 
-// Decode hostname/path and trim url
-//  - url        - url to decode
-//  - max_length - maximum allowed length for this url (use `usize::MAX` to disable)
-//
+/// Pretty-print url and fit it into N characters (url elision).
+///
+/// Result of this function is intended to be viewed by humans only,
+/// and it's not guaranteed to stay a valid url anymore.
+///
+/// This function takes `max_length` argument, which is maximum allowed
+/// character count for this url. If `url` is longer than this, less
+/// relevant parts of it will be replaced with `…` character.
+/// Use `usize::MAX` to disable this feature.
+///
+/// The elision algorithm is similar to one used in chromium:
+/// <https://chromium.googlesource.com/chromium/src/+/refs/heads/main/components/url_formatter/elide_url.cc>
+///
+/// It reads as follows:
+///
+///  1. Chop off path, e.g.
+///
+///     "/foo/bar/baz/quux" -> "/foo/bar/…/quux" -> "/foo/…/quux" -> "/…/quux"
+///
+///  2. Get rid of 2+ level subdomains, e.g.
+///
+///     "foo.bar.baz.example.com" -> "…bar.baz.example.com" ->
+///     "…baz.example.com" -> "…example.com"
+///
+///     Exception 1: if 2nd level domain is 1-3 letters, truncate to 3rd level:
+///
+///     "foo.bar.baz.co.uk" -> ... -> "…baz.co.uk"
+///
+///     Exception 2: don't change if it is 3rd level domain which has short (1-4 characters) 3rd level
+///     "foo.example.org" -> "foo.example.org"
+///     "bar.foo.example.org" -> "…example.org"
+///
+///  3. Truncate the rest of the url if needed
+///
 pub fn format_url_for_humans(url: &str, max_length: usize) -> String {
     //if max_length == 0 { max_length = usize::MAX; }
     let mut parsed = crate::parse_url(url);
@@ -206,9 +211,12 @@ pub fn format_url_for_humans(url: &str, max_length: usize) -> String {
         // We don't encode unknown schemas, because it's likely that we encode
         // something we shouldn't (e.g. `skype:name` treated as `skype:host`)
         //
+        #[allow(clippy::collapsible_if)]
         if parsed.protocol.is_none() || HTTPS_OR_MAILTO.is_match(parsed.protocol.as_ref().unwrap()) {
-            let (x, _) = idna::domain_to_unicode(hostname);
-            parsed.hostname = Some(x);
+            if hostname.starts_with("xn--") {
+                let (x, _) = idna::domain_to_unicode(hostname);
+                parsed.hostname = Some(x);
+            }
         }
     }
 
