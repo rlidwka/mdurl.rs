@@ -1,6 +1,6 @@
 [package]
 name = "mdurl"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Alex Kocharin <alex@kocharin.ru>"]
 description = "URL parser and formatter that gracefully handles invalid input."
 documentation = "https://docs.rs/mdurl"
