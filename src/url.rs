@@ -213,7 +213,7 @@ mod tests {
     #[test]
     fn round_trip() {
         for str in FIXTURES {
-            let url = parse_url(str, false);
+            let url = parse_url(str);
             assert_eq!(url.to_string(), str);
         }
     }

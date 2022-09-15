@@ -48,7 +48,7 @@ pub fn main() {
         let syntax = ss.find_syntax_by_extension("rs").unwrap();
 
         let debug = document.get_element_by_id("debug").expect("no #debug");
-        let html = highlighted_html_for_string(&format!("{:#?}", mdurl::parse_url(&src, true)), &ss, syntax, theme);
+        let html = highlighted_html_for_string(&format!("{:#?}", mdurl::parse_url(&src)), &ss, syntax, theme);
         debug.set_inner_html(&html.unwrap_or_else(|_| "syntect failed, report this".into()));
     });
 

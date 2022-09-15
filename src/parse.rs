@@ -127,14 +127,19 @@ static SLASHED_PROTOCOL : Lazy<HashSet<&'static str>> = Lazy::new(||
 ///
 ///  - url - The URL string to parse.
 ///
-///  - slashes_denote_host - If `true`, the first token after the literal
-///    string `//` and preceding the next `/` will be interpreted as the `host`.
-///    For instance, given `//foo/bar`, the result would be
-///    `{host: 'foo', pathname: '/bar'}` rather than `{pathname: '//foo/bar'}`.
-///
 /// This is a non-standard parsing algorithm derived from node.js legacy URL parser.
 ///
-pub fn parse_url(url: &str, slashes_denote_host: bool) -> Url {
+pub fn parse_url(url: &str) -> Url {
+    // - slashes_denote_host - If `true`, the first token after the literal
+    //   string `//` and preceding the next `/` will be interpreted as the `host`.
+    //   For instance, given `//foo/bar`, the result would be
+    //   `{host: 'foo', pathname: '/bar'}` rather than `{pathname: '//foo/bar'}`.
+    //
+    // Rust doesn't allow optional arguments, so this option in original algoritm
+    // was really getting in the way. Tell me if it is a useful option to have.
+    //
+    const SLASHES_DENOTE_HOST: bool = true;
+
     let mut this = Url::default();
     let mut rest = url;
 
@@ -142,7 +147,7 @@ pub fn parse_url(url: &str, slashes_denote_host: bool) -> Url {
     // This is to support parse stuff like "  http://foo.com  \n"
     rest = rest.trim();
 
-    if !slashes_denote_host && !url.contains('#') {
+    if !SLASHES_DENOTE_HOST && !url.contains('#') {
         // Try fast path regexp
         if let Some(simple_path) = SIMPLE_PATH_PATTERN.captures(rest) {
             this.pathname = Some(simple_path.get(1).unwrap().as_str().into());
@@ -162,7 +167,7 @@ pub fn parse_url(url: &str, slashes_denote_host: bool) -> Url {
     // user@server is *always* interpreted as a hostname, and url
     // resolution will treat //foo/bar as host=foo,path=bar because that's
     // how the browser resolves relative URLs.
-    if slashes_denote_host || this.protocol.is_some() || HOST_PATTERN.is_match(rest) {
+    if SLASHES_DENOTE_HOST || this.protocol.is_some() || HOST_PATTERN.is_match(rest) {
         let slashes = rest.starts_with("//");
         if slashes && !(this.protocol.is_some() && HOSTLESS_PROTOCOL.contains(this.protocol.as_ref().unwrap().as_str())) {
             rest = &rest[2..];

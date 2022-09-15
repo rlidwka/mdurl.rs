@@ -23,21 +23,21 @@
 use mdurl::Url;
 use mdurl::parse_url;
 
-#[test]
+/*#[test]
 fn simple_path() {
     assert_eq!(
-        parse_url("//some_path", false),
+        parse_url("//some_path"),
         Url {
             pathname: Some("//some_path".into()),
             ..Default::default()
         }
     );
-}
+}*/
 
 #[test]
 fn test1() {
     assert_eq!(
-        parse_url("HTTP://www.example.com/", false),
+        parse_url("HTTP://www.example.com/"),
         Url {
             protocol: Some("HTTP:".into()),
             slashes: true,
@@ -51,7 +51,7 @@ fn test1() {
 #[test]
 fn test2() {
     assert_eq!(
-        parse_url("HTTP://www.example.com", false),
+        parse_url("HTTP://www.example.com"),
         Url {
             protocol: Some("HTTP:".into()),
             slashes: true,
@@ -65,7 +65,7 @@ fn test2() {
 #[test]
 fn test3() {
     assert_eq!(
-        parse_url("http://www.ExAmPlE.com/", false),
+        parse_url("http://www.ExAmPlE.com/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -79,7 +79,7 @@ fn test3() {
 #[test]
 fn testpw1() {
     assert_eq!(
-        parse_url("http://user:pw@www.ExAmPlE.com/", false),
+        parse_url("http://user:pw@www.ExAmPlE.com/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -94,7 +94,7 @@ fn testpw1() {
 #[test]
 fn testpw2() {
     assert_eq!(
-        parse_url("http://USER:PW@www.ExAmPlE.com/", false),
+        parse_url("http://USER:PW@www.ExAmPlE.com/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -109,7 +109,7 @@ fn testpw2() {
 #[test]
 fn testauth() {
     assert_eq!(
-        parse_url("http://user@www.example.com/", false),
+        parse_url("http://user@www.example.com/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -124,7 +124,7 @@ fn testauth() {
 #[test]
 fn testauth3a() {
     assert_eq!(
-        parse_url("http://user%3Apw@www.example.com/", false),
+        parse_url("http://user%3Apw@www.example.com/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -139,7 +139,7 @@ fn testauth3a() {
 #[test]
 fn thatsall() {
     assert_eq!(
-        parse_url("http://x.com/path?that\'s#all, folks", false),
+        parse_url("http://x.com/path?that\'s#all, folks"),
         Url {
             protocol: Some("http:".into()),
             hostname: Some("x.com".into()),
@@ -155,7 +155,7 @@ fn thatsall() {
 #[test]
 fn testupper() {
     assert_eq!(
-        parse_url("HTTP://X.COM/Y", false),
+        parse_url("HTTP://X.COM/Y"),
         Url {
             protocol: Some("HTTP:".into()),
             slashes: true,
@@ -171,7 +171,7 @@ fn testupper() {
 // per https://url.spec.whatwg.org/#host-parsing
 fn testplus() {
     assert_eq!(
-        parse_url("http://x.y.com+a/b/c", false),
+        parse_url("http://x.y.com+a/b/c"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -186,7 +186,7 @@ fn testplus() {
 // an unexpected invalid char in the hostname.
 fn invalid_char_in_hostname() {
     assert_eq!(
-        parse_url("HtTp://x.y.cOm;a/b/c?d=e#f g<h>i", false),
+        parse_url("HtTp://x.y.cOm;a/b/c?d=e#f g<h>i"),
         Url {
             protocol: Some("HtTp:".into()),
             slashes: true,
@@ -203,7 +203,7 @@ fn invalid_char_in_hostname() {
 // make sure that we don't accidentally lcast the path parts.
 fn testlcast() {
     assert_eq!(
-        parse_url("HtTp://x.y.cOm;A/b/c?d=e#f g<h>i", false),
+        parse_url("HtTp://x.y.cOm;A/b/c?d=e#f g<h>i"),
         Url {
             protocol: Some("HtTp:".into()),
             slashes: true,
@@ -219,7 +219,7 @@ fn testlcast() {
 #[test]
 fn testdots() {
     assert_eq!(
-        parse_url("http://x...y...#p", false),
+        parse_url("http://x...y...#p"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -234,7 +234,7 @@ fn testdots() {
 #[test]
 fn testquoted() {
     assert_eq!(
-        parse_url("http://x/p/\"quoted\"", false),
+        parse_url("http://x/p/\"quoted\""),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -248,7 +248,7 @@ fn testquoted() {
 #[test]
 fn testangled() {
     assert_eq!(
-        parse_url("<http://goo.corn/bread> Is a URL!", false),
+        parse_url("<http://goo.corn/bread> Is a URL!"),
         Url {
             pathname: Some("<http://goo.corn/bread> Is a URL!".into()),
             ..Default::default()
@@ -259,7 +259,7 @@ fn testangled() {
 #[test]
 fn testnarwhaljs() {
     assert_eq!(
-        parse_url("http://www.narwhaljs.org/blog/categories?id=news", false),
+        parse_url("http://www.narwhaljs.org/blog/categories?id=news"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -274,7 +274,7 @@ fn testnarwhaljs() {
 #[test]
 fn testgoog1() {
     assert_eq!(
-        parse_url("http://mt0.google.com/vt/lyrs=m@114&hl=en&src=api&x=2&y=2&z=3&s=", false),
+        parse_url("http://mt0.google.com/vt/lyrs=m@114&hl=en&src=api&x=2&y=2&z=3&s="),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -288,7 +288,7 @@ fn testgoog1() {
 #[test]
 fn testgoog2() {
     assert_eq!(
-        parse_url("http://mt0.google.com/vt/lyrs=m@114???&hl=en&src=api&x=2&y=2&z=3&s=", false),
+        parse_url("http://mt0.google.com/vt/lyrs=m@114???&hl=en&src=api&x=2&y=2&z=3&s="),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -303,7 +303,7 @@ fn testgoog2() {
 #[test]
 fn testgoog3() {
     assert_eq!(
-        parse_url("http://user:pass@mt0.google.com/vt/lyrs=m@114???&hl=en&src=api&x=2&y=2&z=3&s=", false),
+        parse_url("http://user:pass@mt0.google.com/vt/lyrs=m@114???&hl=en&src=api&x=2&y=2&z=3&s="),
         Url {
                 protocol: Some("http:".into()),
                 slashes: true,
@@ -319,7 +319,7 @@ fn testgoog3() {
 #[test]
 fn etcpasswd() {
     assert_eq!(
-        parse_url("file:///etc/passwd", false),
+        parse_url("file:///etc/passwd"),
         Url {
             slashes: true,
             protocol: Some("file:".into()),
@@ -333,7 +333,7 @@ fn etcpasswd() {
 #[test]
 fn etcpasswd2() {
     assert_eq!(
-        parse_url("file://localhost/etc/passwd", false),
+        parse_url("file://localhost/etc/passwd"),
         Url {
             protocol: Some("file:".into()),
             slashes: true,
@@ -347,7 +347,7 @@ fn etcpasswd2() {
 #[test]
 fn etcpasswd3() {
     assert_eq!(
-        parse_url("file://foo/etc/passwd", false),
+        parse_url("file://foo/etc/passwd"),
         Url {
             protocol: Some("file:".into()),
             slashes: true,
@@ -361,7 +361,7 @@ fn etcpasswd3() {
 #[test]
 fn etcnode() {
     assert_eq!(
-        parse_url("file:///etc/node/", false),
+        parse_url("file:///etc/node/"),
         Url {
             slashes: true,
             protocol: Some("file:".into()),
@@ -375,7 +375,7 @@ fn etcnode() {
 #[test]
 fn etcnode2() {
     assert_eq!(
-        parse_url("file://localhost/etc/node/", false),
+        parse_url("file://localhost/etc/node/"),
         Url {
             protocol: Some("file:".into()),
             slashes: true,
@@ -389,7 +389,7 @@ fn etcnode2() {
 #[test]
 fn etcnode3() {
     assert_eq!(
-        parse_url("file://foo/etc/node/", false),
+        parse_url("file://foo/etc/node/"),
         Url {
             protocol: Some("file:".into()),
             slashes: true,
@@ -403,7 +403,7 @@ fn etcnode3() {
 #[test]
 fn testdotdot() {
     assert_eq!(
-        parse_url("http:/baz/../foo/bar", false),
+        parse_url("http:/baz/../foo/bar"),
         Url {
             protocol: Some("http:".into()),
             pathname: Some("/baz/../foo/bar".into()),
@@ -415,7 +415,7 @@ fn testdotdot() {
 #[test]
 fn testfullurl() {
     assert_eq!(
-        parse_url("http://user:pass@example.com:8000/foo/bar?baz=quux#frag", false),
+        parse_url("http://user:pass@example.com:8000/foo/bar?baz=quux#frag"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -433,7 +433,7 @@ fn testfullurl() {
 #[test]
 fn testnoproto() {
     assert_eq!(
-        parse_url("//user:pass@example.com:8000/foo/bar?baz=quux#frag", false),
+        parse_url("//user:pass@example.com:8000/foo/bar?baz=quux#frag"),
         Url {
             slashes: true,
             auth: Some("user:pass".into()),
@@ -450,7 +450,7 @@ fn testnoproto() {
 #[test]
 fn testnohost() {
     assert_eq!(
-        parse_url("/foo/bar?baz=quux#frag", false),
+        parse_url("/foo/bar?baz=quux#frag"),
         Url {
             hash: Some("#frag".into()),
             search: Some("?baz=quux".into()),
@@ -463,7 +463,7 @@ fn testnohost() {
 #[test]
 fn oneslash() {
     assert_eq!(
-        parse_url("http:/foo/bar?baz=quux#frag", false),
+        parse_url("http:/foo/bar?baz=quux#frag"),
         Url {
             protocol: Some("http:".into()),
             hash: Some("#frag".into()),
@@ -477,7 +477,7 @@ fn oneslash() {
 #[test]
 fn mailto() {
     assert_eq!(
-        parse_url("mailto:foo@bar.com?subject=hello", false),
+        parse_url("mailto:foo@bar.com?subject=hello"),
         Url {
             protocol: Some("mailto:".into()),
             auth: Some("foo".into()),
@@ -491,7 +491,7 @@ fn mailto() {
 #[test]
 fn javascript() {
     assert_eq!(
-        parse_url("javascript:alert(\'hello\');", false),
+        parse_url("javascript:alert(\'hello\');"),
         Url {
             protocol: Some("javascript:".into()),
             pathname: Some("alert(\'hello\');".into()),
@@ -503,7 +503,7 @@ fn javascript() {
 #[test]
 fn xmpp() {
     assert_eq!(
-        parse_url("xmpp:isaacschlueter@jabber.org", false),
+        parse_url("xmpp:isaacschlueter@jabber.org"),
         Url {
             protocol: Some("xmpp:".into()),
             auth: Some("isaacschlueter".into()),
@@ -516,7 +516,7 @@ fn xmpp() {
 #[test]
 fn testatpass() {
     assert_eq!(
-        parse_url("http://atpass:foo%40bar@127.0.0.1:8080/path?search=foo#bar", false),
+        parse_url("http://atpass:foo%40bar@127.0.0.1:8080/path?search=foo#bar"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -534,7 +534,7 @@ fn testatpass() {
 #[test]
 fn svnssh() {
     assert_eq!(
-        parse_url("svn+ssh://foo/bar", false),
+        parse_url("svn+ssh://foo/bar"),
         Url {
             hostname: Some("foo".into()),
             protocol: Some("svn+ssh:".into()),
@@ -548,7 +548,7 @@ fn svnssh() {
 #[test]
 fn dashtest() {
     assert_eq!(
-        parse_url("dash-test://foo/bar", false),
+        parse_url("dash-test://foo/bar"),
         Url {
             hostname: Some("foo".into()),
             protocol: Some("dash-test:".into()),
@@ -562,7 +562,7 @@ fn dashtest() {
 #[test]
 fn dashtest2() {
     assert_eq!(
-        parse_url("dash-test:foo/bar", false),
+        parse_url("dash-test:foo/bar"),
         Url {
             hostname: Some("foo".into()),
             protocol: Some("dash-test:".into()),
@@ -575,7 +575,7 @@ fn dashtest2() {
 #[test]
 fn dottest() {
     assert_eq!(
-        parse_url("dot.test://foo/bar", false),
+        parse_url("dot.test://foo/bar"),
         Url {
             hostname: Some("foo".into()),
             protocol: Some("dot.test:".into()),
@@ -589,7 +589,7 @@ fn dottest() {
 #[test]
 fn dottest2() {
     assert_eq!(
-        parse_url("dot.test:foo/bar", false),
+        parse_url("dot.test:foo/bar"),
         Url {
             hostname: Some("foo".into()),
             protocol: Some("dot.test:".into()),
@@ -603,7 +603,7 @@ fn dottest2() {
 // IDNA tests
 fn idna1() {
     assert_eq!(
-        parse_url("http://www.日本語.com/", false),
+        parse_url("http://www.日本語.com/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -617,7 +617,7 @@ fn idna1() {
 #[test]
 fn idna2() {
     assert_eq!(
-        parse_url("http://example.Bücher.com/", false),
+        parse_url("http://example.Bücher.com/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -631,7 +631,7 @@ fn idna2() {
 #[test]
 fn idna3() {
     assert_eq!(
-        parse_url("http://www.Äffchen.com/", false),
+        parse_url("http://www.Äffchen.com/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -645,7 +645,7 @@ fn idna3() {
 #[test]
 fn idna4() {
     assert_eq!(
-        parse_url("http://www.Äffchen.cOm;A/b/c?d=e#f g<h>i", false),
+        parse_url("http://www.Äffchen.cOm;A/b/c?d=e#f g<h>i"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -661,7 +661,7 @@ fn idna4() {
 #[test]
 fn idna5() {
     assert_eq!(
-        parse_url("http://SÉLIER.COM/", false),
+        parse_url("http://SÉLIER.COM/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -675,7 +675,7 @@ fn idna5() {
 #[test]
 fn idna6() {
     assert_eq!(
-        parse_url("http://ﻞﻴﻬﻣﺎﺒﺘﻜﻠﻣﻮﺸﻋﺮﺒﻳ؟.ﻱ؟/", false),
+        parse_url("http://ﻞﻴﻬﻣﺎﺒﺘﻜﻠﻣﻮﺸﻋﺮﺒﻳ؟.ﻱ؟/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -689,7 +689,7 @@ fn idna6() {
 #[test]
 fn idna7() {
     assert_eq!(
-        parse_url("http://➡.ws/➡", false),
+        parse_url("http://➡.ws/➡"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -703,7 +703,7 @@ fn idna7() {
 #[test]
 fn amazon() {
     assert_eq!(
-        parse_url("http://bucket_name.s3.amazonaws.com/image.jpg", false),
+        parse_url("http://bucket_name.s3.amazonaws.com/image.jpg"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -717,7 +717,7 @@ fn amazon() {
 #[test]
 fn githttp() {
     assert_eq!(
-        parse_url("git+http://github.com/joyent/node.git", false),
+        parse_url("git+http://github.com/joyent/node.git"),
         Url {
             protocol: Some("git+http:".into()),
             slashes: true,
@@ -734,7 +734,7 @@ fn githttp() {
 // way to make it work in url.parse, I add the test to be explicit
 fn local1domain1() {
     assert_eq!(
-        parse_url("local1@domain1", false),
+        parse_url("local1@domain1"),
         Url {
             pathname: Some("local1@domain1".into()),
             ..Default::default()
@@ -747,7 +747,7 @@ fn local1domain1() {
 // <a href='www.google.com'> as a path.
 fn bare_domain() {
     assert_eq!(
-        parse_url("www.example.com", false),
+        parse_url("www.example.com"),
         Url {
             pathname: Some("www.example.com".into()),
             ..Default::default()
@@ -758,7 +758,7 @@ fn bare_domain() {
 #[test]
 fn ipv6_1() {
     assert_eq!(
-        parse_url("[fe80::1]", false),
+        parse_url("[fe80::1]"),
         Url {
             pathname: Some("[fe80::1]".into()),
             ..Default::default()
@@ -769,7 +769,7 @@ fn ipv6_1() {
 #[test]
 fn ipv6_2() {
     assert_eq!(
-        parse_url("coap://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]", false),
+        parse_url("coap://[FEDC:BA98:7654:3210:FEDC:BA98:7654:3210]"),
         Url {
             protocol: Some("coap:".into()),
             slashes: true,
@@ -782,7 +782,7 @@ fn ipv6_2() {
 #[test]
 fn ipv6_3() {
     assert_eq!(
-        parse_url("coap://[1080:0:0:0:8:800:200C:417A]:61616/", false),
+        parse_url("coap://[1080:0:0:0:8:800:200C:417A]:61616/"),
         Url {
             protocol: Some("coap:".into()),
             slashes: true,
@@ -797,7 +797,7 @@ fn ipv6_3() {
 #[test]
 fn ipv6_4() {
     assert_eq!(
-        parse_url("http://user:password@[3ffe:2a00:100:7031::1]:8080", false),
+        parse_url("http://user:password@[3ffe:2a00:100:7031::1]:8080"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -813,7 +813,7 @@ fn ipv6_4() {
 #[test]
 fn ipv6_5() {
     assert_eq!(
-        parse_url("coap://u:p@[::192.9.5.5]:61616/.well-known/r?n=Temperature", false),
+        parse_url("coap://u:p@[::192.9.5.5]:61616/.well-known/r?n=Temperature"),
         Url {
             protocol: Some("coap:".into()),
             slashes: true,
@@ -830,7 +830,7 @@ fn ipv6_5() {
 #[test]
 fn empty_port1() {
     assert_eq!(
-        parse_url("http://example.com:", false),
+        parse_url("http://example.com:"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -844,7 +844,7 @@ fn empty_port1() {
 #[test]
 fn empty_port2() {
     assert_eq!(
-        parse_url("http://example.com:/a/b.html", false),
+        parse_url("http://example.com:/a/b.html"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -858,7 +858,7 @@ fn empty_port2() {
 #[test]
 fn empty_port3() {
     assert_eq!(
-        parse_url("http://example.com:?a=b", false),
+        parse_url("http://example.com:?a=b"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -873,7 +873,7 @@ fn empty_port3() {
 #[test]
 fn empty_port4() {
     assert_eq!(
-        parse_url("http://example.com:#abc", false),
+        parse_url("http://example.com:#abc"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -888,7 +888,7 @@ fn empty_port4() {
 #[test]
 fn empty_port5() {
     assert_eq!(
-        parse_url("http://[fe80::1]:/a/b?a=b#abc", false),
+        parse_url("http://[fe80::1]:/a/b?a=b#abc"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -904,7 +904,7 @@ fn empty_port5() {
 #[test]
 fn leadingdash1() {
     assert_eq!(
-        parse_url("http://-lovemonsterz.tumblr.com/rss", false),
+        parse_url("http://-lovemonsterz.tumblr.com/rss"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -918,7 +918,7 @@ fn leadingdash1() {
 #[test]
 fn leadingdash2() {
     assert_eq!(
-        parse_url("http://-lovemonsterz.tumblr.com:80/rss", false),
+        parse_url("http://-lovemonsterz.tumblr.com:80/rss"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -933,7 +933,7 @@ fn leadingdash2() {
 #[test]
 fn leadingdash3() {
     assert_eq!(
-        parse_url("http://user:pass@-lovemonsterz.tumblr.com/rss", false),
+        parse_url("http://user:pass@-lovemonsterz.tumblr.com/rss"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -948,7 +948,7 @@ fn leadingdash3() {
 #[test]
 fn leadingdash4() {
     assert_eq!(
-        parse_url("http://user:pass@-lovemonsterz.tumblr.com:80/rss", false),
+        parse_url("http://user:pass@-lovemonsterz.tumblr.com:80/rss"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -964,7 +964,7 @@ fn leadingdash4() {
 #[test]
 fn leadingund1() {
     assert_eq!(
-        parse_url("http://_jabber._tcp.google.com/test", false),
+        parse_url("http://_jabber._tcp.google.com/test"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -978,7 +978,7 @@ fn leadingund1() {
 #[test]
 fn leadingund2() {
     assert_eq!(
-        parse_url("http://user:pass@_jabber._tcp.google.com/test", false),
+        parse_url("http://user:pass@_jabber._tcp.google.com/test"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -993,7 +993,7 @@ fn leadingund2() {
 #[test]
 fn leadingund3() {
     assert_eq!(
-        parse_url("http://_jabber._tcp.google.com:80/test", false),
+        parse_url("http://_jabber._tcp.google.com:80/test"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1008,7 +1008,7 @@ fn leadingund3() {
 #[test]
 fn leadingund4() {
     assert_eq!(
-        parse_url("http://user:pass@_jabber._tcp.google.com:80/test", false),
+        parse_url("http://user:pass@_jabber._tcp.google.com:80/test"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1024,7 +1024,7 @@ fn leadingund4() {
 #[test]
 fn testpuncts() {
     assert_eq!(
-        parse_url("http://x:1/' <>\"`/{}|\\^~`/", false),
+        parse_url("http://x:1/' <>\"`/{}|\\^~`/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1039,7 +1039,7 @@ fn testpuncts() {
 #[test]
 fn testat1() {
     assert_eq!(
-        parse_url("http://a@b@c/", false),
+        parse_url("http://a@b@c/"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1054,7 +1054,7 @@ fn testat1() {
 #[test]
 fn testat2() {
     assert_eq!(
-        parse_url("http://a@b?@c", false),
+        parse_url("http://a@b?@c"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1070,7 +1070,7 @@ fn testat2() {
 #[test]
 fn testspecials() {
     assert_eq!(
-        parse_url("http://a\r\" \t\n<'b:b@c\r\nd/e?f", false),
+        parse_url("http://a\r\" \t\n<'b:b@c\r\nd/e?f"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1087,7 +1087,7 @@ fn testspecials() {
 // git urls used by npm
 fn giturls() {
     assert_eq!(
-        parse_url("git+ssh://git@github.com:npm/npm", false),
+        parse_url("git+ssh://git@github.com:npm/npm"),
         Url {
             protocol: Some("git+ssh:".into()),
             slashes: true,
@@ -1102,7 +1102,7 @@ fn giturls() {
 #[test]
 fn testfrag1() {
     assert_eq!(
-        parse_url("http://example.com?foo=bar#frag", false),
+        parse_url("http://example.com?foo=bar#frag"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1118,7 +1118,7 @@ fn testfrag1() {
 #[test]
 fn testfrag2() {
     assert_eq!(
-        parse_url("http://example.com?foo=@bar#frag", false),
+        parse_url("http://example.com?foo=@bar#frag"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1134,7 +1134,7 @@ fn testfrag2() {
 #[test]
 fn testfrag3() {
     assert_eq!(
-        parse_url("http://example.com?foo=/bar/#frag", false),
+        parse_url("http://example.com?foo=/bar/#frag"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1150,7 +1150,7 @@ fn testfrag3() {
 #[test]
 fn testfrag4() {
     assert_eq!(
-        parse_url("http://example.com?foo=?bar/#frag", false),
+        parse_url("http://example.com?foo=?bar/#frag"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1166,7 +1166,7 @@ fn testfrag4() {
 #[test]
 fn testfrag5() {
     assert_eq!(
-        parse_url("http://example.com#frag=?bar/#frag", false),
+        parse_url("http://example.com#frag=?bar/#frag"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1181,7 +1181,7 @@ fn testfrag5() {
 #[test]
 fn testxss() {
     assert_eq!(
-        parse_url("http://google.com\" onload=\"alert(42)/", false),
+        parse_url("http://google.com\" onload=\"alert(42)/"),
         Url {
             hostname: Some("google.com".into()),
             protocol: Some("http:".into()),
@@ -1195,7 +1195,7 @@ fn testxss() {
 #[test]
 fn acom() {
     assert_eq!(
-        parse_url("http://a.com/a/b/c?s#h", false),
+        parse_url("http://a.com/a/b/c?s#h"),
         Url {
             protocol: Some("http:".into()),
             slashes: true,
@@ -1211,7 +1211,7 @@ fn acom() {
 #[test]
 fn test127001() {
     assert_eq!(
-        parse_url("http://atpass:foo%40bar@127.0.0.1/", false),
+        parse_url("http://atpass:foo%40bar@127.0.0.1/"),
         Url {
             auth: Some("atpass:foo%40bar".into()),
             slashes: true,
@@ -1226,7 +1226,7 @@ fn test127001() {
 #[test]
 fn testescaped() {
     assert_eq!(
-        parse_url("http://atslash%2F%40:%2F%40@foo/", false),
+        parse_url("http://atslash%2F%40:%2F%40@foo/"),
         Url {
             auth: Some("atslash%2F%40:%2F%40".into()),
             hostname: Some("foo".into()),
@@ -1241,7 +1241,7 @@ fn testescaped() {
 #[test]
 fn ipv6_a() {
     assert_eq!(
-        parse_url("coap:u:p@[::1]:61616/.well-known/r?n=Temperature", false),
+        parse_url("coap:u:p@[::1]:61616/.well-known/r?n=Temperature"),
         Url {
             protocol: Some("coap:".into()),
             auth: Some("u:p".into()),
@@ -1257,7 +1257,7 @@ fn ipv6_a() {
 #[test]
 fn ipv6_b() {
     assert_eq!(
-        parse_url("coap:[fedc:ba98:7654:3210:fedc:ba98:7654:3210]:61616/s/stopButton", false),
+        parse_url("coap:[fedc:ba98:7654:3210:fedc:ba98:7654:3210]:61616/s/stopButton"),
         Url {
             hostname: Some("fedc:ba98:7654:3210:fedc:ba98:7654:3210".into()),
             port: Some("61616".into()),
@@ -1275,7 +1275,7 @@ fn ipv6_b() {
 fn delims() {
     // `?` and `#` in path and search
     assert_eq!(
-        parse_url("http://ex.com/foo%3F100%m%23r?abc=the%231?&foo=bar#frag", false),
+        parse_url("http://ex.com/foo%3F100%m%23r?abc=the%231?&foo=bar#frag"),
         Url {
             protocol: Some("http:".into()),
             hostname: Some("ex.com".into()),
@@ -1292,7 +1292,7 @@ fn delims() {
 fn delims2() {
     // `?` and `#` in search only
     assert_eq!(
-        parse_url("http://ex.com/fooA100%mBr?abc=the%231?&foo=bar#frag", false),
+        parse_url("http://ex.com/fooA100%mBr?abc=the%231?&foo=bar#frag"),
         Url {
             protocol: Some("http:".into()),
             hostname: Some("ex.com".into()),

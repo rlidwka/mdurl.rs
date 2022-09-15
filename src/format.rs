@@ -13,10 +13,9 @@ static IP_HOST_CHECK : Lazy<Regex> = Lazy::new(||
 
 // Decode hostname/path and trim url
 //  - url_str    - url to decode
-//  - max_length - maximum allowed length for this url
 //
 pub fn format_url_for_computers(url: &str) -> String {
-    let mut parsed = crate::parse_url(url, true);
+    let mut parsed = crate::parse_url(url);
 
     if let Some(hostname) = parsed.hostname.as_ref() {
         // Encode hostnames in urls like:
@@ -187,17 +186,17 @@ fn elide_url(mut url: Url, max: usize) -> String {
 
 // Decode hostname/path and trim url
 //  - url        - url to decode
-//  - max_length - maximum allowed length for this url
+//  - max_length - maximum allowed length for this url (use `usize::MAX` to disable)
 //
 pub fn format_url_for_humans(url: &str, max_length: usize) -> String {
     //if max_length == 0 { max_length = usize::MAX; }
-    let mut parsed = crate::parse_url(url, true);
+    let mut parsed = crate::parse_url(url);
     let url_with_slashes;
 
     // urls without host and protocol, e.g. "example.org/foo"
     if parsed.protocol.is_none() && !parsed.slashes && parsed.hostname.is_none() {
         url_with_slashes = format!("//{url}");
-        parsed = crate::parse_url(&url_with_slashes, true);
+        parsed = crate::parse_url(&url_with_slashes);
     }
 
     if let Some(hostname) = parsed.hostname.as_ref() {
