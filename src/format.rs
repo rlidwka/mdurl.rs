@@ -55,7 +55,9 @@ fn elide_text(mut text: String, max: usize) -> String {
     for (count, (offset, _)) in text.char_indices().enumerate() {
         if count >= max {
             text.truncate(offset);
-            text.push('…');
+            if !text.ends_with('…') {
+                text.push('…');
+            }
             break;
         }
     }
@@ -334,6 +336,27 @@ mod tests {
             let expected = "www.google.com/search?q=hello%252Fhello";
             assert_eq!(format_url_for_humans(source, usize::MAX), expected);
         }
+
+        #[test]
+        fn url_without_protocol_slashes() {
+            let source = "//www.google.com/foobar";
+            let expected = "www.google.com/foobar";
+            assert_eq!(format_url_for_humans(source, usize::MAX), expected);
+        }
+
+        #[test]
+        fn url_without_protocol_no_slashes() {
+            let source = "www.google.com/foobar";
+            let expected = "www.google.com/foobar";
+            assert_eq!(format_url_for_humans(source, usize::MAX), expected);
+        }
+
+        #[test]
+        fn should_omit_mailto() {
+            let source = "mailto:foo@example.org";
+            let expected = "foo@example.org";
+            assert_eq!(format_url_for_humans(source, usize::MAX), expected);
+        }
     }
 
     mod elide_url {
@@ -358,6 +381,69 @@ mod tests {
             let source = "https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html";
             let expected = "blog.chromium.org/…/no-more-mixed-messag…";
             assert_eq!(format_url_for_humans(source, 40), expected);
+        }
+
+        #[test]
+        fn should_work_with_0_or_1_char() {
+            let source = "https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html";
+            assert_eq!(format_url_for_humans(source, 0), "…");
+            assert_eq!(format_url_for_humans(source, 1), "b…");
+        }
+
+        #[test]
+        fn should_elide_middle_of_the_path() {
+            let source = "https://www.reddit.com/r/programming/comments/vxttiq/comment/ifyqsqt/?utm_source=reddit&utm_medium=web2x&context=3";
+            let expected = "www.reddit.com/r/programming/…/ifyqsqt/?ut…";
+            assert_eq!(format_url_for_humans(source, 42), expected);
+        }
+
+        #[test]
+        fn should_elide_if_path_ends_with_slash() {
+            let source = "https://example.org/foo/bar/baz/";
+            let expected = "example.org/…/baz/";
+            assert_eq!(format_url_for_humans(source, 23), expected);
+        }
+
+        #[test]
+        fn should_not_have_consecutive_elides() {
+            let source = "https://example.org/foo/bar/baz/";
+            let expected = "example.org/…";
+            assert_eq!(format_url_for_humans(source, 13), expected);
+        }
+
+        #[test]
+        fn should_elide_domains_from_the_front() {
+            let source = "https://foo.bar.baz.example.org";
+            let expected = "…baz.example.org";
+            assert_eq!(format_url_for_humans(source, 19), expected);
+        }
+
+        #[test]
+        fn should_elide_ip_addresses_from_the_back() {
+            let source = "https://127.123.123.234/";
+            let expected = "127.123.12…";
+            assert_eq!(format_url_for_humans(source, 10), expected);
+        }
+
+        #[test]
+        fn remove_www_without_eliding() {
+            let source = "https://www.google.com/foobar";
+            let expected = "google.com/foob…";
+            assert_eq!(format_url_for_humans(source, 15), expected);
+        }
+
+        #[test]
+        fn remove_www_without_eliding2() {
+            let source = "https://www.google.com";
+            let expected = "google.com";
+            assert_eq!(format_url_for_humans(source, 12), expected);
+        }
+
+        #[test]
+        fn second_level_www() {
+            let source = "https://www.com/foobar";
+            let expected = "www.com/…";
+            assert_eq!(format_url_for_humans(source, 8), expected);
         }
     }
 }
