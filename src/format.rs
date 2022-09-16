@@ -19,6 +19,10 @@ static IP_HOST_CHECK : Lazy<Regex> = Lazy::new(||
 pub fn format_url_for_computers(url: &str) -> String {
     let mut parsed = crate::parse_url(url);
 
+    if let Some(protocol) = parsed.protocol.as_ref() {
+        parsed.protocol = Some(protocol.to_ascii_lowercase());
+    }
+
     if let Some(hostname) = parsed.hostname.as_ref() {
         // Encode hostnames in urls like:
         // `http://host/`, `https://host/`, `mailto:user@host`, `//host/`
@@ -65,8 +69,8 @@ fn elide_url(mut url: Url, max: usize) -> String {
 
     // Maximum length of url without query+hash part
     //
-    let max_path_length = max + query_length;
-    let max_path_length = if max_path_length < 2 { 0 } else { max_path_length - 2 };
+    let max_path_length = max.saturating_add(query_length);
+    let max_path_length = max_path_length.saturating_sub(2);
 
     // Here and below this `if` condition means:
     //
@@ -258,26 +262,102 @@ pub fn format_url_for_humans(url: &str, max_length: usize) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::format_url_for_humans;
+    use super::*;
 
-    #[test]
-    fn should_truncate_domains() {
-        let source = "https://whatever.example.com/foobarbazquux?query=string";
-        let expected = "…example.com/foobarb…";
-        assert_eq!(format_url_for_humans(source, 20), expected);
+    mod format_url_for_computers {
+        use super::*;
+
+        #[test]
+        fn encode_should_punycode_domains() {
+            let source = "https://ουτοπία.δπθ.gr/";
+            let expected = "https://xn--kxae4bafwg.xn--pxaix.gr/";
+            assert_eq!(format_url_for_computers(source), expected);
+        }
+
+        #[test]
+        fn encode_should_lowercase_protocol_and_domain() {
+            let source = "HTTP://GOOGLE.COM/";
+            let expected = "http://google.com/";
+            assert_eq!(format_url_for_computers(source), expected);
+        }
+
+        #[test]
+        fn encode_should_urlencode_nonascii_parts() {
+            let source = "http://example.org/✔️?q=❤️";
+            let expected = "http://example.org/%E2%9C%94%EF%B8%8F?q=%E2%9D%A4%EF%B8%8F";
+            assert_eq!(format_url_for_computers(source), expected);
+        }
+
+        #[test]
+        fn encode_should_skip_already_encoded_sequences() {
+            let source = "http://example.org/%20%25";
+            let expected = "http://example.org/%20%25";
+            assert_eq!(format_url_for_computers(source), expected);
+        }
     }
 
-    #[test]
-    fn should_show_common_2nd_level_domains() {
-        let source = "https://whatever.example.co.uk/foobarbazquux?query=string";
-        let expected = "…example.co.uk/fooba…";
-        assert_eq!(format_url_for_humans(source, 20), expected);
+    mod format_url_for_humans {
+        use super::*;
+
+        #[test]
+        fn should_decode_punycode_domains() {
+            let source = "https://xn--kxae4bafwg.xn--pxaix.gr/";
+            let expected = "ουτοπία.δπθ.gr";
+            assert_eq!(format_url_for_humans(source, usize::MAX), expected);
+        }
+
+        #[test]
+        fn should_keep_uppercase_domain() {
+            let source = "HTTP://GOOGLE.COM/";
+            let expected = "GOOGLE.COM";
+            assert_eq!(format_url_for_humans(source, usize::MAX), expected);
+        }
+
+        #[test]
+        fn should_keep_uppercase_protocol() {
+            let source = "JAVASCRIPT:alert(1)";
+            let expected = "JAVASCRIPT:alert(1)";
+            assert_eq!(format_url_for_humans(source, usize::MAX), expected);
+        }
+
+        #[test]
+        fn encode_should_urlencode_nonascii_parts() {
+            let source = "http://example.org/%E2%9C%94%EF%B8%8F?q=%E2%9D%A4%EF%B8%8F";
+            let expected = "example.org/✔️?q=❤️";
+            assert_eq!(format_url_for_humans(source, usize::MAX), expected);
+        }
+
+        #[test]
+        fn should_keep_encoded_sequences() {
+            // https://github.com/markdown-it/markdown-it/issues/720
+            let source = "https://www.google.com/search?q=hello%252Fhello";
+            let expected = "www.google.com/search?q=hello%252Fhello";
+            assert_eq!(format_url_for_humans(source, usize::MAX), expected);
+        }
     }
 
-    #[test]
-    fn should_show_4_letter_3rd_level_domains() {
-        let source = "https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html";
-        let expected = "blog.chromium.org/…/no-more-mixed-messag…";
-        assert_eq!(format_url_for_humans(source, 40), expected);
+    mod elide_url {
+        use super::*;
+
+        #[test]
+        fn should_truncate_domains() {
+            let source = "https://whatever.example.com/foobarbazquux?query=string";
+            let expected = "…example.com/foobarb…";
+            assert_eq!(format_url_for_humans(source, 20), expected);
+        }
+
+        #[test]
+        fn should_show_common_2nd_level_domains() {
+            let source = "https://whatever.example.co.uk/foobarbazquux?query=string";
+            let expected = "…example.co.uk/fooba…";
+            assert_eq!(format_url_for_humans(source, 20), expected);
+        }
+
+        #[test]
+        fn should_show_4_letter_3rd_level_domains() {
+            let source = "https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html";
+            let expected = "blog.chromium.org/…/no-more-mixed-messag…";
+            assert_eq!(format_url_for_humans(source, 40), expected);
+        }
     }
 }

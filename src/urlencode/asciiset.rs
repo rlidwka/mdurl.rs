@@ -1,7 +1,7 @@
 /// Represents a set of characters or bytes in the ASCII range.
 ///
 /// Similar to <https://github.com/servo/rust-url/blob/master/percent_encoding/src/lib.rs>
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct AsciiSet(u128);
 
 impl AsciiSet {
@@ -121,5 +121,10 @@ mod tests {
     #[should_panic]
     fn add_higher_byte() {
         AsciiSet::new().add(0xfa);
+    }
+
+    #[test]
+    fn add_remove() {
+        assert_eq!(AsciiSet::new().add(0x20).remove(0x20), AsciiSet::new());
     }
 }

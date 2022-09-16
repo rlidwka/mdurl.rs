@@ -58,14 +58,14 @@ static PORT_PATTERN : Lazy<Regex> = Lazy::new(||
     Regex::new(r#":[0-9]*$"#).unwrap()
 );
 
-static HOST_PATTERN : Lazy<Regex> = Lazy::new(||
-    Regex::new(r#"^//[^@/]+@[^@/]+"#).unwrap()
-);
+//static HOST_PATTERN : Lazy<Regex> = Lazy::new(||
+//    Regex::new(r#"^//[^@/]+@[^@/]+"#).unwrap()
+//);
 
 // Special case for a simple path URL
-static SIMPLE_PATH_PATTERN : Lazy<Regex> = Lazy::new(||
-    Regex::new(r#"^(//?[^/\?\s]?[^\?\s]*)(\?[^\s]*)?$"#).unwrap()
-);
+//static SIMPLE_PATH_PATTERN : Lazy<Regex> = Lazy::new(||
+//    Regex::new(r#"^(//?[^/\?\s]?[^\?\s]*)(\?[^\s]*)?$"#).unwrap()
+//);
 
 const NON_HOST_CHARS : [ char; 8 + 6 + 1 + 5 ] = [
     // RFC 2396: characters reserved for delimiting URLs.
@@ -86,8 +86,6 @@ const NON_HOST_CHARS : [ char; 8 + 6 + 1 + 5 ] = [
 ];
 
 const HOST_ENDING_CHARS : [ char; 3 ] = [ '/', '?', '#' ];
-
-const HOSTNAME_MAX_LEN : usize = 255;
 
 static HOSTNAME_PART_PATTERN : Lazy<Regex> = Lazy::new(||
     Regex::new(r#"^[+a-z0-9A-Z_-]{0,63}$"#).unwrap()
@@ -141,31 +139,12 @@ static SLASHED_PROTOCOL : Lazy<HashSet<&'static str>> = Lazy::new(||
 ///    `Url::to_string()` will reflect your changes as is.
 ///
 pub fn parse_url(url: &str) -> Url {
-    // - slashes_denote_host - If `true`, the first token after the literal
-    //   string `//` and preceding the next `/` will be interpreted as the `host`.
-    //   For instance, given `//foo/bar`, the result would be
-    //   `{host: 'foo', pathname: '/bar'}` rather than `{pathname: '//foo/bar'}`.
-    //
-    // Rust doesn't allow optional arguments, so this option in original algoritm
-    // was really getting in the way. Tell me if it is a useful option to have.
-    //
-    const SLASHES_DENOTE_HOST: bool = true;
-
     let mut this = Url::default();
     let mut rest = url;
 
     // trim before proceeding.
     // This is to support parse stuff like "  http://foo.com  \n"
     rest = rest.trim();
-
-    if !SLASHES_DENOTE_HOST && !url.contains('#') {
-        // Try fast path regexp
-        if let Some(simple_path) = SIMPLE_PATH_PATTERN.captures(rest) {
-            this.pathname = Some(simple_path.get(1).unwrap().as_str().into());
-            this.search = simple_path.get(2).map(|x| x.as_str().into());
-            return this;
-        }
-    }
 
     if let Some(proto_match) = PROTOCOL_PATTERN.captures(rest) {
         let proto = Some(proto_match.get(0).unwrap().as_str());
@@ -178,12 +157,10 @@ pub fn parse_url(url: &str) -> Url {
     // user@server is *always* interpreted as a hostname, and url
     // resolution will treat //foo/bar as host=foo,path=bar because that's
     // how the browser resolves relative URLs.
-    if SLASHES_DENOTE_HOST || this.protocol.is_some() || HOST_PATTERN.is_match(rest) {
-        let slashes = rest.starts_with("//");
-        if slashes && !(this.protocol.is_some() && HOSTLESS_PROTOCOL.contains(this.protocol.as_ref().unwrap().as_str())) {
-            rest = &rest[2..];
-            this.slashes = true;
-        }
+    let slashes = rest.starts_with("//");
+    if slashes && !(this.protocol.is_some() && HOSTLESS_PROTOCOL.contains(this.protocol.as_ref().unwrap().as_str())) {
+        rest = &rest[2..];
+        this.slashes = true;
     }
 
     if (this.protocol.is_none() || !HOSTLESS_PROTOCOL.contains(this.protocol.as_ref().unwrap().as_str())) &&
@@ -280,10 +257,6 @@ pub fn parse_url(url: &str) -> Url {
                     }
                 }
             }
-        }
-
-        if this.hostname.as_ref().unwrap().len() > HOSTNAME_MAX_LEN {
-            this.hostname = Some(String::new());
         }
 
         // strip [ and ] from the hostname

@@ -23,16 +23,16 @@
 use mdurl::Url;
 use mdurl::parse_url;
 
-/*#[test]
+#[test]
 fn simple_path() {
     assert_eq!(
-        parse_url("//some_path"),
+        parse_url("/some_path"),
         Url {
-            pathname: Some("//some_path".into()),
+            pathname: Some("/some_path".into()),
             ..Default::default()
         }
     );
-}*/
+}
 
 #[test]
 fn test1() {
