@@ -126,6 +126,16 @@ static SLASHED_PROTOCOL : Lazy<HashSet<&'static str>> = Lazy::new(||
 /// This function uses a non-standard parsing algorithm derived from node.js
 /// legacy URL parser.
 ///
+/// ```rust
+/// let url = "https://www.reddit.com/r/programming/comments/vxttiq/\
+/// comment/ifyqsqt/?utm_source=reddit&utm_medium=web2x&context=3";
+/// let u = mdurl::parse_url(url);
+///
+/// assert_eq!(u.hostname, Some("www.reddit.com".into()));
+/// assert_eq!(u.pathname, Some("/r/programming/comments/vxttiq/comment/ifyqsqt/".into()));
+/// assert_eq!(u.search, Some("?utm_source=reddit&utm_medium=web2x&context=3".into()));
+/// ```
+///
 /// There are three major differences from [url](https://crates.io/crates/url) crate:
 ///
 ///  - It returns `Url`, not `Result<Url>`. We try our best to parse any urls,

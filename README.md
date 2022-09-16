@@ -7,9 +7,11 @@
 [<img alt="coverage" src="https://img.shields.io/codecov/c/github/rlidwka/mdurl.rs?style=for-the-badge" height="20">](https://app.codecov.io/gh/rlidwka/mdurl.rs)
 
 URL parser and formatter that gracefully handles invalid input.
-Rust port of [mdurl.js](https://github.com/markdown-it/mdurl) library.
 
-This is a tool for pretty-printing user-supplied urls plus a url parser that makes it possible.
+It is a rust port of [mdurl.js](https://github.com/markdown-it/mdurl) library, created specifically
+for url rendering in [markdown-it](https://github.com/rlidwka/markdown-it.rs) parser.
+
+### URL formatter
 
 ```rust
 use mdurl::format_url_for_humans as format;
@@ -23,3 +25,15 @@ assert_eq!(format(url, 50), "www.reddit.com/r/programming/comments/…/ifyqsqt/?
 
 Check out [this demo](https://rlidwka.github.io/mdurl.rs/) to play around with different URLs
 and lengths.
+
+### URL parser
+
+```rust
+let url = "https://www.reddit.com/r/programming/comments/vxttiq/\
+comment/ifyqsqt/?utm_source=reddit&utm_medium=web2x&context=3";
+let u = mdurl::parse_url(url);
+
+assert_eq!(u.hostname, Some("www.reddit.com".into()));
+assert_eq!(u.pathname, Some("/r/programming/comments/vxttiq/comment/ifyqsqt/".into()));
+assert_eq!(u.search, Some("?utm_source=reddit&utm_medium=web2x&context=3".into()));
+```
