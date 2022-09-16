@@ -16,9 +16,9 @@ use mdurl::format_url_for_humans as format;
 let url = "https://www.reddit.com/r/programming/comments/vxttiq/\
 comment/ifyqsqt/?utm_source=reddit&utm_medium=web2x&context=3";
 
-assert_eq!(format(url, 20), "reddit.com/…/ifyqsqt…");
-assert_eq!(format(url, 30), "www.reddit.com/r/…/ifyqsqt/?ut…");
-assert_eq!(format(url, 50), "www.reddit.com/r/programming/comments/…/ifyqsqt/?u…");
+assert_eq!(format(url, 20), "reddit.com/…/ifyqsq…");
+assert_eq!(format(url, 30), "www.reddit.com/r/…/ifyqsqt/?u…");
+assert_eq!(format(url, 50), "www.reddit.com/r/programming/comments/…/ifyqsqt/?…");
 ```
 
 Check out [this demo](https://rlidwka.github.io/mdurl.rs/) to play around with different URLs

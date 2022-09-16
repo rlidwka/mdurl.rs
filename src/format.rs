@@ -53,7 +53,7 @@ pub fn format_url_for_computers(url: &str) -> String {
 // if string char length > max then truncate string and add "..."
 fn elide_text(mut text: String, max: usize) -> String {
     for (count, (offset, _)) in text.char_indices().enumerate() {
-        if count >= max {
+        if count + 1 >= max {
             text.truncate(offset);
             if !text.ends_with('…') {
                 text.push('…');
@@ -366,34 +366,34 @@ mod tests {
         fn should_truncate_domains() {
             let source = "https://whatever.example.com/foobarbazquux?query=string";
             let expected = "…example.com/foobarb…";
-            assert_eq!(format_url_for_humans(source, 20), expected);
+            assert_eq!(format_url_for_humans(source, 21), expected);
         }
 
         #[test]
         fn should_show_common_2nd_level_domains() {
             let source = "https://whatever.example.co.uk/foobarbazquux?query=string";
             let expected = "…example.co.uk/fooba…";
-            assert_eq!(format_url_for_humans(source, 20), expected);
+            assert_eq!(format_url_for_humans(source, 21), expected);
         }
 
         #[test]
         fn should_show_4_letter_3rd_level_domains() {
             let source = "https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html";
             let expected = "blog.chromium.org/…/no-more-mixed-messag…";
-            assert_eq!(format_url_for_humans(source, 40), expected);
+            assert_eq!(format_url_for_humans(source, 41), expected);
         }
 
         #[test]
         fn should_work_with_0_or_1_char() {
             let source = "https://blog.chromium.org/2019/10/no-more-mixed-messages-about-https.html";
             assert_eq!(format_url_for_humans(source, 0), "…");
-            assert_eq!(format_url_for_humans(source, 1), "b…");
+            assert_eq!(format_url_for_humans(source, 1), "…");
         }
 
         #[test]
         fn should_elide_middle_of_the_path() {
             let source = "https://www.reddit.com/r/programming/comments/vxttiq/comment/ifyqsqt/?utm_source=reddit&utm_medium=web2x&context=3";
-            let expected = "www.reddit.com/r/programming/…/ifyqsqt/?ut…";
+            let expected = "www.reddit.com/r/programming/…/ifyqsqt/?u…";
             assert_eq!(format_url_for_humans(source, 42), expected);
         }
 
@@ -408,42 +408,42 @@ mod tests {
         fn should_not_have_consecutive_elides() {
             let source = "https://example.org/foo/bar/baz/";
             let expected = "example.org/…";
-            assert_eq!(format_url_for_humans(source, 13), expected);
+            assert_eq!(format_url_for_humans(source, 14), expected);
         }
 
         #[test]
         fn should_elide_domains_from_the_front() {
             let source = "https://foo.bar.baz.example.org";
             let expected = "…baz.example.org";
-            assert_eq!(format_url_for_humans(source, 19), expected);
+            assert_eq!(format_url_for_humans(source, 20), expected);
         }
 
         #[test]
         fn should_elide_ip_addresses_from_the_back() {
             let source = "https://127.123.123.234/";
             let expected = "127.123.12…";
-            assert_eq!(format_url_for_humans(source, 10), expected);
+            assert_eq!(format_url_for_humans(source, 11), expected);
         }
 
         #[test]
         fn remove_www_without_eliding() {
             let source = "https://www.google.com/foobar";
             let expected = "google.com/foob…";
-            assert_eq!(format_url_for_humans(source, 15), expected);
+            assert_eq!(format_url_for_humans(source, 16), expected);
         }
 
         #[test]
         fn remove_www_without_eliding2() {
             let source = "https://www.google.com";
             let expected = "google.com";
-            assert_eq!(format_url_for_humans(source, 12), expected);
+            assert_eq!(format_url_for_humans(source, 13), expected);
         }
 
         #[test]
         fn second_level_www() {
             let source = "https://www.com/foobar";
             let expected = "www.com/…";
-            assert_eq!(format_url_for_humans(source, 8), expected);
+            assert_eq!(format_url_for_humans(source, 9), expected);
         }
     }
 }
