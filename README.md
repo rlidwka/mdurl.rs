@@ -13,6 +13,11 @@ for url rendering in [markdown-it](https://github.com/rlidwka/markdown-it.rs) pa
 
 ### URL formatter
 
+This function takes URL, decodes it, and fits it into N characters, replacing the rest with
+"…" symbol (that's called "url elision").
+
+This is similar to what Chromium would show you in status bar when you hover your mouse over a link.
+
 ```rust
 use mdurl::format_url_for_humans as format;
 let url = "https://www.reddit.com/r/programming/comments/vxttiq/\
@@ -26,7 +31,12 @@ assert_eq!(format(url, 50), "www.reddit.com/r/programming/comments/…/ifyqsqt/?
 Check out [this demo](https://rlidwka.github.io/mdurl.rs/) to play around with different URLs
 and lengths.
 
+[humanize-url](https://crates.io/crates/humanize-url) crate tries to achieve similar goals,
+let me know if there are others.
+
 ### URL parser
+
+In order to achieve the task above, a new url parser had to be created, so here it is:
 
 ```rust
 let url = "https://www.reddit.com/r/programming/comments/vxttiq/\
@@ -37,3 +47,10 @@ assert_eq!(u.hostname, Some("www.reddit.com".into()));
 assert_eq!(u.pathname, Some("/r/programming/comments/vxttiq/comment/ifyqsqt/".into()));
 assert_eq!(u.search, Some("?utm_source=reddit&utm_medium=web2x&context=3".into()));
 ```
+
+This function uses a non-standard parsing algorithm derived from node.js legacy URL parser.
+
+You should probably be using [rust-url](https://crates.io/crates/url) crate instead.
+Unfortunately, it isn't suitable for the task of pretty-printing urls because
+you can't customize parts of Url returned by that library (for example, rust-url
+will always encode non-ascii hostname with punycode, this implementation will not).
